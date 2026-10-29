@@ -1,0 +1,1 @@
+Scheda DCM – versione installabile
