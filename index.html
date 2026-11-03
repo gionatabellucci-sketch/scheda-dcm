@@ -83,6 +83,11 @@ h3.k{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mu
 .ptstem{background:var(--surface2)}
 .pto button .ck{display:inline-block;margin-right:8px;font-weight:700}
 .pto.col{flex-direction:column}
+.pto.sc{gap:6px}
+.pto.sc button{flex:1 1 0;min-width:0;padding:0;font-size:20px}
+.ptscl{display:flex;justify-content:space-between;gap:12px;font-size:15px;color:var(--muted);margin-top:6px}
+.qf .ptv{outline:2px dashed var(--accent);outline-offset:1px}
+.ptnote{font-size:13px;color:var(--accent);margin:4px 0 8px}
 .pto.col button{flex:none;width:100%;min-width:0;text-align:left;padding:10px 16px;font-size:18px;min-height:54px}
 .ptym input{max-width:140px;letter-spacing:.05em}
 .qopt summary{cursor:pointer;font-weight:600;padding:8px 0}
@@ -264,6 +269,32 @@ table.mx tr.sec td{background:var(--surface2);font-weight:600;font-size:12px;pad
 @media(max-width:560px){.heads{grid-template-columns:1fr 1fr}.bodies{grid-template-columns:1fr 1fr;gap:10px}}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:no-preference){.bar i{transition:width .25s}}
+.fdmodes{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.fdmodes .chipb{display:inline-flex;align-items:center;gap:6px}
+.fdmodes .chipb.fdopt{border-style:dashed}
+.fdhint{font-size:13px;color:var(--muted);min-height:1.2em;margin:0 0 8px}
+.fdsides{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.fdlbl{font-size:12px;color:var(--muted);font-weight:600;margin:4px 0 2px}
+.fdarch{display:grid;grid-template-columns:repeat(16,1fr);grid-template-rows:14px auto;column-gap:4px}
+.fdbr{grid-row:1;align-self:end;height:9px;border:2px solid var(--fdp);border-bottom:0;margin:0 3px;pointer-events:none}
+.fdbr.cr{margin:0 6px}
+.fdt{grid-row:2;position:relative;appearance:none;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:8px;min-height:44px;padding:0;font:600 clamp(11px,2.1vw,16px) var(--font);font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation}
+.fdt.m8{border-style:dashed}
+.fdt.mid{margin-right:5px}
+.fdt.mid::after{content:'';position:absolute;right:-7px;top:-20px;bottom:-6px;border-right:2px solid var(--ink)}
+.fdt.sX,.fdt.sA{background:var(--warn-soft);border-color:var(--warn);color:var(--warn);font-size:clamp(15px,3vw,22px)}
+.fdt.sR{background:var(--fdp-soft);border-color:var(--fdp);color:var(--fdp);font-size:clamp(15px,3vw,22px)}
+.fdt.sI{background:var(--fdp-soft);border-color:var(--fdp);color:var(--fdp)}
+.fdt.anc{outline:2px dashed var(--fdp);outline-offset:2px}
+.fdt svg{width:clamp(13px,2.4vw,20px);height:auto}
+.fdocc{border-top:2px solid var(--ink);margin:12px 0 10px}
+.fdleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:8px}
+.fdleg span{display:inline-flex;align-items:center;gap:4px}
+.fdleg i{display:inline-block;width:16px;height:7px;border:2px solid var(--fdp);border-bottom:0}
+.fdres{font-size:14px;margin-top:8px;background:var(--accent-soft);border-radius:8px;padding:8px 10px}
+:root{--fdp:#5a4bb0;--fdp-soft:#e7e3f8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fdp:#b3a6ff;--fdp-soft:#2a2547}}
+:root[data-theme="dark"]{--fdp:#b3a6ff;--fdp-soft:#2a2547}
 </style>
 
 <div class="app">
@@ -384,6 +415,13 @@ if(byId.p1) byId.p1.eff=()=>(S.v.p2===1||S.psede!=='art')?null:S.v.p1;
 const CGRP=DATA.cgrp, CDX=DATA.cdx, GNAME={M:'Muscolare',A:'Articolare'};
 const DEF_M = Object.fromEntries(ALL.map(i=>[i.id,[...i.m]]));
 const DEF_MW = Object.fromEntries(ALL.map(i=>[i.id,{...i.mw}]));
+/* ---------- versione della scheda e impronta della matrice ---------- */
+const APP_VER='57', APP_BUILD='91c855b2';
+function fnv(str){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0 } return h.toString(16).padStart(8,'0') }
+function mxKey(mw,conds){ return JSON.stringify([conds,ALL.map(i=>[i.id,Object.entries(mw[i.id]||{}).filter(([,v])=>v).sort((a,b)=>a[0]-b[0])])]) }
+const MX_DEF=fnv(mxKey(DEF_MW,DATA.conds));
+function verNow(){ const mx=fnv(mxKey(Object.fromEntries(ALL.map(i=>[i.id,i.mw])),CONDS)); return {app:APP_VER,build:APP_BUILD,mx,mxStd:mx===MX_DEF} }
+const verTxt=v=>v?('versione '+v.app+' (build '+v.build+'), matrice '+(v.mxStd?'standard':'modificata localmente')+' ['+v.mx+']'):'versione non registrata (caso salvato prima della versione 57)';
 const DEF_CONDS = [...DATA.conds];
 const DEF_NORM = JSON.parse(JSON.stringify(DATA.normals));
 let CONDS = LS.get('dcm_conds2')||[...DEF_CONDS];
@@ -410,6 +448,23 @@ const OBCI=['Serrare o digrignare i denti durante il sonno, in base alle informa
 const OBCGI='Con quale frequenza ha eseguito nell\'ultimo mese ognuna delle seguenti attività? Se la frequenza delle attività varia scelga l\'opzione più alta. Per piacere risponda ad ogni punto e non ne salti nessuno.';
 const MODQ=(p,ids,c)=>[{k:p+'a',t:'A. Masticare cibi duri o resistenti',o:NY(ids),dep:[[p.replace(/x$/,''),[1]]]},{k:p+'b',t:'B. Aprire la bocca o muovere la mandibola in avanti o lateralmente',o:NY(ids)},{k:p+'c',t:'C. Abitudini mandibolari come mantenere i denti a contatto, serrare/digrignare i denti, masticare '+c,o:NY(ids)},{k:p+'d',t:'D. Altre attività mandibolari come parlare, baciare o sbadigliare.',o:NY(ids)}];
 const OURGI='Le domande da qui in poi non fanno parte del questionario internazionale: servono al medico per completare la visita.';
+const FRQ=['Per niente','Alcuni giorni','Più della metà dei giorni','Quasi ogni giorno'];
+const DIFF=[[1,'Per niente difficile'],[2,'Un po\' difficile'],[3,'Molto difficile'],[4,'Estremamente difficile']];
+const JFLS=[[1,'Masticare cibo resistente'],[2,'Masticare del pollo (ad esempio cotto al forno)'],[3,'Mangiare cibi morbidi che non richiedono masticazione (ad es. purè di patate, marmellate, salse, budini, frullati)'],[4,'Aprire la bocca tanto da poter bere da una tazza'],[5,'Deglutire'],[6,'Sbadigliare'],[7,'Parlare'],[8,'Sorridere']];
+const PHQ4=[[1,'Sentirsi nervoso, ansioso o con i nervi a fior di pelle'],[2,'Essere incapace di fermare o controllare la preoccupazione'],[3,'Poco interesse o entusiasmo nel fare le cose.'],[4,'Sentirsi giù, depresso, o senza speranza']];
+const SC10=(lo,hi)=>Array.from({length:11},(_,i)=>({t:String(i),a:[]}));
+const PTGC=[['gc2','Che intensità ha il suo dolore al volto IN QUESTO MOMENTO?'],['gc3','Negli ULTIMI 30 GIORNI, che intensità ha avuto il suo PEGGIORE dolore al volto?'],['gc4','Negli ULTIMI 30 GIORNI, che intensità ha avuto IN MEDIA il suo dolore al volto? Cioè il suo dolore abituale, quando ha dolore.']];
+const PTGI=[['gc6','Negli ULTIMI 30 GIORNI, quanto ha interferito il dolore al volto con le sue ATTIVITÀ QUOTIDIANE?'],['gc7','Negli ULTIMI 30 GIORNI, quanto ha interferito il dolore al volto con le sue ATTIVITÀ RICREATIVE, SOCIALI E FAMILIARI?'],['gc8','Negli ULTIMI 30 GIORNI, quanto ha interferito il dolore al volto con le sue CAPACITÀ LAVORATIVE, incluse le faccende di casa?']];
+const PTDEPGC=[['sq1',[1]]];
+const PTQ_GC={g:'Intensità e impatto del dolore',dc:1,gi:'Risponda pensando al dolore al volto (mandibola, tempia, orecchio o davanti all\'orecchio).',q:[
+ {k:'gc1',num:1,max:180,u:'giorni',dep:PTDEPGC,t:'Quanti giorni ha avuto dolore al volto negli ultimi 6 mesi?',h:'Scriva un numero da 0 a 180.'},
+ ...PTGC.map(([k,t])=>({k,sc:['Nessun dolore','Il dolore peggiore che possa esistere'],dep:PTDEPGC,t,o:SC10()})),
+ {k:'gc5',num:1,max:30,u:'giorni',dep:PTDEPGC,t:'Negli ULTIMI 30 GIORNI, per quanti giorni il dolore al volto le ha impedito di svolgere le sue ATTIVITÀ ABITUALI, come il lavoro, la scuola o le faccende domestiche?',h:'Scriva un numero da 0 a 30.'},
+ ...PTGI.map(([k,t])=>({k,sc:['Nessuna interferenza','Incapace di svolgere ogni attività'],dep:PTDEPGC,t,o:SC10()}))]};
+const PTQ_JF={g:'Uso della mandibola',dc:1,gi:'Per ogni attività indichi quanto è stata limitata negli ultimi 30 giorni, da 0 (nessuna limitazione) a 10 (limitazione grave). Se ha evitato del tutto l\'attività perché troppo difficile, scelga 10. Se l\'ha evitata per altri motivi, salti la domanda.',
+ q:JFLS.map(([k,t])=>({k:'jf'+k,sc:['Nessuna limitazione','Limitazione grave'],t:k+'. '+t,o:SC10()}))};
+const PTQ_P4={g:'Come si è sentito',dc:1,gi:'Nelle ultime 2 settimane, quanto spesso è stato disturbato dai seguenti problemi?',
+ q:PHQ4.map(([k,t])=>({k:'p4'+k,t:k+'. '+t,o:obo(FRQ),vert:1})).concat([{k:'p4f',off:1,t:'Se ha segnato qualcuno di questi problemi, quanto le hanno reso difficile svolgere il suo lavoro, occuparsi delle faccende di casa, andare d\'accordo con le altre persone?',o:obo(DIFF.map(x=>x[1])),vert:1}])};
 const PTQ=[
 {g:'Dolore alla mandibola e alle tempie',dc:1,q:[
  {k:'scr1',t:'Negli ultimi 30 giorni, quali delle seguenti condizioni descrive meglio il dolore alla mandibola o nella zona delle tempie su uno o su entrambi i lati?',o:obo(['Nessun dolore','Il dolore va e viene','Il dolore è sempre presente'])},
@@ -425,6 +480,7 @@ const PTQ=[
  {k:'sq3',dep:[['sq1',[1]]],t:'Negli ultimi 30 giorni, quali delle seguenti situazioni descrive meglio il dolore alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio su uno dei due lati?',h:'Scelga una risposta.',o:obo(['Nessun dolore','Dolore che va e viene','Dolore sempre presente'])},
  {k:'sq4',x:1,dep:[['sq3',[1,2]]],t:'Negli ultimi 30 giorni, qualcuna delle seguenti attività ha cambiato il dolore (cioè lo ha peggiorato o migliorato) alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio su uno dei due lati?'},
  ...MODQ('sq4',['a6','k2'],'gomme').map(q=>Object.assign(q,{dep:[['sq3',[1,2]]]}))]},
+PTQ_GC,
 {g:'Mal di testa',dc:1,q:[
  {k:'sq5',t:'Negli ultimi 30 giorni, ha mai avuto un mal di testa che includeva l\'area delle tempie?',o:NY([])},
  {k:'sq6',ym:1,dep:[['sq5',[1]]],t:'Quanti anni o mesi fa è iniziato il mal di testa alle tempie?'},
@@ -438,8 +494,10 @@ const PTQ=[
  {k:'sq12',dep:[['sq11',[1]]],t:'La sua mandibola è attualmente bloccata o limitata tanto da non poter aprire COMPLETAMENTE?',o:NY([])},
  {k:'sq13',t:'Negli ultimi 30 giorni, quando ha aperto al massimo la bocca, è mai rimasto bloccato in maniera permanente o momentaneamente, in modo da non poter chiudere la bocca?',h:'Cioè: le è capitato che, dopo aver aperto molto la bocca, non riuscisse a richiuderla da solo/a?',svg:'lock',o:NY(['a28a'])},
  {k:'sq14',dep:[['sq13',[1]]],t:'Negli ultimi 30 giorni, quando la mandibola si è bloccata in maniera permanente o momentaneamente a bocca aperta, ha dovuto fare qualcosa per poter chiudere la bocca, incluso il riposo, muovere, spingere o manovrare la mandibola?',o:NY(['a28b'])}]},
+PTQ_JF,
 {g:'Abitudini della bocca durante il sonno',dc:1,gi:OBCGI,q:OBCI.slice(0,2).map((t,i)=>({k:'obc'+(i+1),t:(i+1)+'. '+t,o:obo(OBN),vert:1}))},
 {g:'Abitudini della bocca durante il giorno',dc:1,gi:OBCGI,q:OBCI.slice(2).map((t,i)=>({k:'obc'+(i+3),t:(i+3)+'. '+t,o:obo(OBD),vert:1}))},
+PTQ_P4,
 {g:'Altre domande sul dolore',gi:OURGI,q:[
  {k:'sede',t:'Negli ultimi 30 giorni, ha sentito dolore in almeno una di queste zone: guancia, davanti all\'orecchio, dentro l\'orecchio, tempia?',o:[{t:'Sì',a:[]},{t:'No',a:[['a4',0]]},{t:'Non so',a:[],ns:1}]},
  {k:'qual',dep:[['sede',[0]]],t:'Quale di queste parole descrive meglio il suo dolore?',h:'Scelga quella più vicina a ciò che sente.',vert:1,o:[{t:'Sordo, come un peso o una pressione',a:[['a4',1]]},{t:'Pulsante, che batte',a:[['a4',0]],pq:'pulsante'},{t:'Una fitta o una scossa',a:[['a4',0]],pq:'trafittivo'},{t:'Bruciante',a:[['a4',0]],pq:'bruciante'},{t:'Non so',a:[],ns:1}]},
@@ -472,7 +530,7 @@ const PTQ=[
 ];
 const PTSVG={nopen:'<svg viewBox="0 0 430 192" role="img" aria-label="Disegno: a sinistra bocca aperta del tutto, a destra la bocca che si ferma prima e non si apre del tutto" style="width:100%;max-width:560px;margin-top:10px"><polygon points="100,98 142,98 117.3,135.9" fill="var(--ink)" opacity=".18"/><circle cx="80" cy="58" r="44" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><path d="M118,62 q16,8 6,22" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><line x1="100" y1="98" x2="142" y2="98" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/><polygon points="78.0,84.0 52.3,117.3 102.4,157.2 117.3,135.9 100.9,124.5" fill="var(--surface2)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/><circle cx="78" cy="84" r="5" fill="var(--accent)"/><text x="80" y="186" text-anchor="middle" font-size="15" fill="var(--ink)">Apertura completa</text><polygon points="310,98 352,98 345.0,115.4" fill="var(--ink)" opacity=".18"/><circle cx="290" cy="58" r="44" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><path d="M328,62 q16,8 6,22" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><line x1="310" y1="98" x2="352" y2="98" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/><polygon points="288.0,84.0 278.1,124.9 340.1,140.9 345.0,115.4 325.4,111.7" fill="var(--surface2)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/><circle cx="288" cy="84" r="5" fill="var(--accent)"/><text x="290" y="186" text-anchor="middle" font-size="15" fill="var(--ink)">Non si apre del tutto</text><path d="M355.0,119.4 Q375.0,137.4 363.0,155.4" fill="none" stroke="var(--warn)" stroke-width="3.5" stroke-dasharray="7 5"/><path d="M353.0,159.4 l20,0" stroke="var(--warn)" stroke-width="5" stroke-linecap="round"/></svg>',lock:'<svg viewBox="0 0 430 192" role="img" aria-label="Disegno: a sinistra bocca molto aperta, a destra la bocca che non riesce a richiudersi da sola" style="width:100%;max-width:560px;margin-top:10px"><polygon points="100,98 142,98 117.3,135.9" fill="var(--ink)" opacity=".18"/><circle cx="80" cy="58" r="44" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><path d="M118,62 q16,8 6,22" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><line x1="100" y1="98" x2="142" y2="98" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/><polygon points="78.0,84.0 52.3,117.3 102.4,157.2 117.3,135.9 100.9,124.5" fill="var(--surface2)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/><circle cx="78" cy="84" r="5" fill="var(--accent)"/><polygon points="310,98 352,98 327.3,135.9" fill="var(--ink)" opacity=".18"/><circle cx="290" cy="58" r="44" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><path d="M328,62 q16,8 6,22" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><line x1="310" y1="98" x2="352" y2="98" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/><polygon points="288.0,84.0 262.3,117.3 312.4,157.2 327.3,135.9 310.9,124.5" fill="var(--surface2)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/><circle cx="288" cy="84" r="5" fill="var(--accent)"/><path d="M338,156 Q370,142 356,112" fill="none" stroke="var(--warn)" stroke-width="3.5" stroke-dasharray="7 5"/><path d="M356,112 l-4,13 m4,-13 l11,8" stroke="var(--warn)" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M368,124 l18,18 m0,-18 l-18,18" stroke="var(--warn)" stroke-width="5" stroke-linecap="round"/><text x="80" y="186" text-anchor="middle" font-size="15" fill="var(--ink)">Bocca molto aperta</text><text x="300" y="186" text-anchor="middle" font-size="15" fill="var(--ink)">Non si richiude da sola</text></svg>'};
 const PTQALL=PTQ.flatMap(g=>g.q); const PTQK={}; PTQALL.forEach(q=>PTQK[q.k]=q);
-function pqOpts(q){ if(q.o) return q.o; if(q.x||q.ym) return []; const y=q.y,n=q.n===undefined?q.y:q.n; return [{t:'Sì',a:y.map(i=>[i,1])},{t:'No',a:n.map(i=>[i,0])},{t:'Non so',a:[],ns:1}] }
+function pqOpts(q){ if(q.o) return q.o; if(q.x||q.ym||q.num) return []; const y=q.y,n=q.n===undefined?q.y:q.n; return [{t:'Sì',a:y.map(i=>[i,1])},{t:'No',a:n.map(i=>[i,0])},{t:'Non so',a:[],ns:1}] }
 function pqActive(q){ if(!q||!q.dep) return true; const D=typeof q.dep==='string'?[[q.dep,[0]]]:q.dep; return D.every(([k,v])=>v.includes(S.pt[k])&&pqActive(PTQK[k])) }
 function ptActs(){ const A={}; PTQALL.forEach(q=>{ const a=S.pt[q.k]; if(a==null||!pqActive(q)) return;
     ((pqOpts(q)[a]||{a:[]}).a||[]).forEach(([id,val])=>{ A[id]=Math.max(A[id]==null?-1:A[id],val) }) }); return A }
@@ -533,6 +591,8 @@ function ptRender(){
     g.q.filter(pqActive).forEach(q=>{ const a=S.pt[q.k];
       if(q.x){ h+=`<div class="ptq ptstem"><div class="t">${esc(q.t)}</div></div>`; return }
       if(q.ym){ h+=`<div class="ptq"><div class="t">${esc(q.t)}</div><div class="pto">${[['a','Anni'],['m','Mesi']].map(([s2,l])=>`<label class="ptpl ptym">${l}<input data-ptn="${q.k}_${s2}" inputmode="numeric" autocomplete="off" maxlength="3" value="${esc(S.pt[q.k+'_'+s2]||'')}"></label>`).join('')}</div></div>`; return }
+      if(q.num){ h+=`<div class="ptq"><div class="t">${esc(q.t)}</div>${q.h?`<div class="h">${esc(q.h)}</div>`:''}<div class="pto"><label class="ptpl ptym">${esc(q.u)}<input data-ptn="${q.k}" data-ptmax="${q.max}" inputmode="numeric" autocomplete="off" maxlength="3" value="${esc(S.pt[q.k]==null?'':S.pt[q.k])}"></label></div></div>`; return }
+      if(q.sc){ const O=pqOpts(q); h+=`<div class="ptq"><div class="t">${esc(q.t)}</div><div class="pto sc">${O.map((o,k)=>`<button data-ptq="${q.k}" data-pto="${k}" aria-pressed="${a===k}">${esc(o.t)}</button>`).join('')}</div><div class="ptscl"><span>0 = ${esc(q.sc[0])}</span><span>10 = ${esc(q.sc[1])}</span></div></div>`; return }
       const O=pqOpts(q);
       h+=`<div class="ptq"><div class="t">${esc(q.t)}</div>${q.h?`<div class="h">${esc(q.h)}</div>`:''}${q.svg?PTSVG[q.svg]:''}<div class="pto${q.vert?' col':O.length>3?' many':''}">${ptOrder(O).map(k=>{const o=O[k];return `<button class="${o.ns?'ns':''}" data-ptq="${q.k}" data-pto="${k}" aria-pressed="${a===k}">${a===k?'<span class="ck">✓</span>':''}${esc(o.t)}</button>`}).join('')}</div></div>` }) }
   h+=`<div class="ptnav"><button class="sec" data-ptgo="prev" ${PT.p===0?'style="visibility:hidden"':''}>Indietro</button><button data-ptgo="next" ${cur==='end'?'style="visibility:hidden"':''}>${PT.p===0?'Inizia':'Avanti'}</button></div></div>`;
@@ -1068,6 +1128,8 @@ function sideExtra(c){
 function report(c){
   const R=[]; const P=(t,size=10,bold=false)=>R.push([t,size,bold]);
   P('SCHEDA DCM',16,true);
+  { const now=verNow(); P('Calcolato con: '+verTxt(now),8);
+    if(S.cid&&allCases()[S.cid]){ const sv=allCases()[S.cid].ver; if(!sv||sv.app!==now.app||sv.mx!==now.mx) P('Attenzione: il caso era stato salvato con '+verTxt(sv)+'. Le percentuali possono essere diverse da quelle viste allora.',8,true) } }
   P((S.pid?'Paziente (codice): '+S.pid+'   ':'')+'Data: '+S.date,10);
   P('');
   if(c.rf.length){P('RED FLAG (DCM da escludere, approfondimento medico)',11,true);c.rf.forEach(r=>P(' - '+r.label))}
@@ -1205,19 +1267,19 @@ function renderCases(){
   const le=LS.get('dcm_lastexport'), days=le?Math.floor((Date.now()-le)/864e5):null;
   const rem=n&&(days===null||days>=CFG.EXPORT_DAYS)?`<div class="note-warn" id="exprem">${days===null?'Non hai ancora esportato i casi su file.':'Ultima esportazione '+days+' giorni fa.'} Usa "Esporta tutti i casi (JSON)" e conserva il file in due posti.</div>`:'';
   $('#prog').innerHTML=rem+`<div><b>${n}</b> casi salvati${next?` · prossimo traguardo: ${next} casi (${next===50?'apertura a 10 professionisti':'apertura a 20 professionisti'})`:' · traguardi raggiunti'}</div><div class="bar"><i style="width:${Math.min(100,n/(next||100)*100)}%"></i></div>`;
-  $('#caselist').innerHTML=cs.length?cs.map(r=>`<div class="row"><div class="info"><b>${esc(r.pid||'(senza codice)')}</b> · ${esc(r.date)}<div class="small">${esc(r.top||'')}</div></div><button class="ghost" data-open="${r.cid}">Apri</button><button class="ghost" data-del="${r.cid}">Elimina</button></div>`).join(''):'<p class="small">Nessun caso salvato.</p>';
+  $('#caselist').innerHTML=cs.length?cs.map(r=>`<div class="row"><div class="info"><b>${esc(r.pid||'(senza codice)')}</b> · ${esc(r.date)} · <span class="small">${r.ver?'v'+esc(r.ver.app)+(r.ver.mxStd?'':' (matrice modificata)'):'versione non registrata'}</span><div class="small">${esc(r.top||'')}</div></div><button class="ghost" data-open="${r.cid}">Apri</button><button class="ghost" data-del="${r.cid}">Elimina</button></div>`).join(''):'<p class="small">Nessun caso salvato.</p>';
 }
 function saveCase(){
   if(!S.pid.trim()){flash('#casemsg','Inserisci prima il codice paziente');return}
   if(!S.cid) S.cid='c'+Date.now();
-  const c=compute(); const rec=snapshot(); rec.cid=S.cid; rec.savedAt=Date.now();
+  const c=compute(); const rec=snapshot(); rec.cid=S.cid; rec.savedAt=Date.now(); rec.ver=verNow();
   rec.top=c.order.map(k=>GNAME[k][0]+': '+c.groups[k].top.map(r=>r.name+' '+Math.round(r.pct)+'%').join(', ')).join(' | ');
   const all=allCases(); all[S.cid]=rec;
   flash('#casemsg',LS.set('dcm_cases2',all)?'Caso salvato':'Salvataggio non riuscito (memoria del browser non disponibile)');
   renderCases();
 }
 async function exportAll(){
-  const out={exported:new Date().toISOString(),conds:CONDS,matrix:Object.fromEntries(ALL.map(i=>[i.id,i.mw])),normals:NORM,cases:Object.values(allCases())};
+  const out={exported:new Date().toISOString(),ver:verNow(),conds:CONDS,matrix:Object.fromEntries(ALL.map(i=>[i.id,i.mw])),normals:NORM,cases:Object.values(allCases())};
   const name='dcm-casi-'+stamp()+'.json'; const r=await saveFile(name,JSON.stringify(out,null,1),'application/json');
   if(r.ok){LS.set('dcm_lastexport',Date.now());flash('#casemsg','Salvato in '+r.where+': '+name);renderCases()} else flash('#casemsg',r.msg,true)
 }
@@ -1374,10 +1436,6 @@ function repaintPain(focusKey){
 const R5=[[1,'eccellente'],[2,'molto buona'],[3,'buona'],[4,'discreta'],[5,'cagionevole']];
 const R5b=[[1,'eccellente'],[2,'molto buono'],[3,'buono'],[4,'discreto'],[5,'insufficiente']];
 const S10=(id,l,dep)=>({id,l,t:'s10',dep});
-const FRQ=['Per niente','Alcuni giorni','Più della metà dei giorni','Quasi ogni giorno'];
-const DIFF=[[1,'Per niente difficile'],[2,'Un po\' difficile'],[3,'Molto difficile'],[4,'Estremamente difficile']];
-const JFLS=[[1,'Masticare cibo resistente'],[2,'Masticare del pollo (ad esempio cotto al forno)'],[3,'Mangiare cibi morbidi che non richiedono masticazione (ad es. purè di patate, marmellate, salse, budini, frullati)'],[4,'Aprire la bocca tanto da poter bere da una tazza'],[5,'Deglutire'],[6,'Sbadigliare'],[7,'Parlare'],[8,'Sorridere']];
-const PHQ4=[[1,'Sentirsi nervoso, ansioso o con i nervi a fior di pelle'],[2,'Essere incapace di fermare o controllare la preoccupazione'],[3,'Poco interesse o entusiasmo nel fare le cose.'],[4,'Sentirsi giù, depresso, o senza speranza']];
 const PHQ9=[[1,'Poco interesse o entusiasmo nel fare le cose.'],[2,'Sentirsi giù, depresso, o senza speranza'],[3,'Avere problemi ad addormentarsi o a dormire, o dormire troppo.'],[4,'Sentirsi stanco o avere poche energie'],[5,'Scarso appetito o mangiare troppo'],[6,'Avere una bassa opinione di sé stesso, sentire di essere un fallimento o di aver deluso la propria famiglia.'],[7,'Avere difficoltà a concentrarsi sulle cose, come leggere il giornale o guardare la televisione'],[8,'Muoversi o parlare tanto lentamente che le persone lo notino? O al contrario essere così agitato o irrequieto da muoversi molto più del solito'],[9,'Pensare che sarebbe meglio essere morti o volersi fare del male.']];
 const GAD7=[[1,'Sentirsi nervoso, ansioso o con i nervi a fior di pelle'],[2,'Non essere capace di smettere di preoccuparsi o di controllare la preoccupazione'],[3,'Preoccuparsi troppo di diverse cose'],[4,'Avere difficoltà a rilassarsi'],[5,'Essere così irrequieto da far risultare difficile lo stare seduto'],[6,'Diventare facilmente irritabile o infastidito.'],[7,'Avere timore che qualcosa di terribile possa accadere']];
 const PHQ15=[[1,'Mal di stomaco'],[2,'Mal di schiena'],[3,'Dolore alle braccia, alle gambe o alle articolazioni (ginocchia, anche, ecc.)'],[4,'Crampi mestruali o altri problemi durante il ciclo [solo per le donne]','Negli uomini lascia vuoto: il punteggio si calcola in proporzione.'],[5,'Mal di testa'],[6,'Dolore al petto'],[7,'Vertigini'],[8,'Svenimenti'],[9,'Sentire il cuore martellante o accelerato'],[10,'Mancanza di respiro'],[11,'Dolore o problemi durante il rapporto sessuale','Non chiederla nella prima visita, solo nei controlli successivi. Se manca, il punteggio si calcola in proporzione.'],[12,'Costipazione, feci poco solide o diarrea'],[13,'Nausea, flatulenze o indigestioni'],[14,'Sentirsi stanco o avere poca energia'],[15,'Difficoltà a dormire']];
@@ -1386,20 +1444,16 @@ const QG={
  g1:{t:'Salute generale e orale',f:[
    {t:'h',l:'Salute generale'},{id:'qanam',l:'Anamnesi',t:'txt'},{id:'qter',l:'Terapia farmacologica',t:'txt'},
    {t:'h',l:'Salute orale'},
-   {id:'ed',l:'Edentulia parziale o totale',t:'yn'},
-   {id:'edarc',l:'Arcata interessata',t:'multi',o:[['sup','mascellare superiore'],['inf','mandibola']],dep:'ed'},
-   {id:'edest',l:'Estensione',t:'sel',o:[[1,'parziale'],[2,'totale']],dep:'ed'},
-   {id:'edtipo',l:'Tipo di edentulia parziale',t:'multi',o:[['dist','distale'],['int','intercalata']],dep:'ed'},
+   {id:'fd',l:'Formula dentale (dentatura permanente)',t:'teeth'},
    {id:'qcl',l:'Classe dentale',t:'sel',o:[[1,'I classe'],[2,'II classe'],[3,'III classe']]},
    {id:'dvo',l:'Perdita della dimensione verticale di occlusione (DVO)',t:'yn'},
    {id:'ovj',l:'Overjet',t:'num',u:'mm'},{id:'ovb',l:'Overbite',t:'num',u:'mm'},
-   {id:'spee',l:'Curva di Spee',t:'sel',o:[[1,'accentuata'],[2,'normale'],[3,'inversa']]},
-   {id:'wil',l:'Curva di Wilson',t:'sel',o:[[1,'normale'],[2,'inversa']]},
+   {id:'spee',l:'Curva di Spee (da valutare su modelli e/o scansioni)',t:'sel',o:[[1,'accentuata'],[2,'normale'],[3,'inversa']]},
+   {id:'wil',l:'Curva di Wilson (da valutare su modelli e/o scansioni)',t:'sel',o:[[1,'normale'],[2,'inversa']]},
    {id:'fac',l:'Faccette di usura o abrasioni (segno clinico, può essere anche storico e non indica attività attuale: esamina superfici occlusali e margini incisivi; se eccentriche vedi il test di provocazione, sezione 10)',t:'yn'},
    {id:'ero',l:'Erosioni',t:'sel',o:[[1,'presenti'],[2,'assenti']]},
    {id:'mob',l:'Denti mobili',t:'yn'},
-   {id:'prot',l:'Portatore di protesi',t:'yn'},
-   {id:'protipo',l:'Tipo di protesi',t:'multi',o:[['fissa','fissa'],['par','parziale removibile'],['tot','totale removibile']],dep:'prot'}]},
+]},
  g2:{t:'Dolore facciale: esordio e decorso',hint:'Se nell\'ultimo mese non c\'è stato dolore, le domande su esordio, decorso e intensità si saltano.',f:[
    {id:'q3',l:'Nell\'ultimo mese ha avuto dolore a faccia, mandibola, regione temporale o preauricolare, o all\'orecchio?',t:'yn'},
    {t:'h',l:'Esordio'},
@@ -1441,31 +1495,109 @@ const QG={
    {id:'p15',t:'lik',opt:1,title:'PHQ-15 (sintomi fisici)',stem:'Nelle ultime 4 settimane, quanto è stato disturbato da ciascuno dei seguenti problemi?',items:PHQ15,o:P15O}]}
 };
 const GH2={oss:{t:'Osservazioni generali'},cerv:{t:'Screening della colonna cervicale',pre:()=>palBlock('cerv')},cervm:{t:'Parte facoltativa',pre:()=>'<div class="optbox"><b>Da qui in poi tutte le voci sono FACOLTATIVE.</b> Non entrano nel punteggio finale: vengono riportate nelle conclusioni, accanto al risultato della dashboard.</div>'+gridBlock('mob')},tc:{t:'TC / CBCT (facoltativo)',pre:()=>'<div class="optbox"><b>Voci FACOLTATIVE:</b> pesano nel risultato solo se compilate.</div>'},neuro:{t:'Screening neurologico (nervi cranici)',hint:'Segna SÌ se trovi un\'alterazione: qualsiasi alterazione compare tra i punti da approfondire dal medico.'}};
-const qn=id=>{const v=S.q[id];return (v===undefined||v===null||v==='')?null:+v};
+const PTMIR=new Set(['gc1','gc2','gc3','gc4','gc5','gc6','gc7','gc8','jf1','jf2','jf3','jf4','jf5','jf6','jf7','jf8','p41','p42','p43','p44','p4f']);
+function ptQv(id){ if(!PTMIR.has(id)||!S.pt) return null; const q=PTQK[id], a=S.pt[id]; if(a==null||a===''||!q||!pqActive(q)) return null; return q.num?+a:(a+(q.off||0)) }
+const qEmpty=v=>v===undefined||v===null||v==='';
+const qn=id=>{const v=S.q[id]; if(!qEmpty(v)) return +v; return ptQv(id)};
+const qFromPt=id=>qEmpty(S.q[id])&&ptQv(id)!=null;
 function segQ(id,v){return `<div class="seg"><button class="si" data-q="${id}" data-qv="1" aria-pressed="${v===1}">SÌ</button><button class="no" data-q="${id}" data-qv="0" aria-pressed="${v===0}">NO</button></div>`}
 function likHTML(f){
   const n=f.n||f.o.length, leg=f.leg||f.o.map((l,k)=>k+' = '+l).join(' · ');
   const body=(f.stem?`<div class="small" style="margin:6px 0 2px"><b>${esc(f.stem)}</b></div>`:'')+`<div class="small">${esc(leg)}</div>`+
-   f.items.map(([k,l,nt])=>`<div class="qf row"><div class="ql">${k}. ${esc(l)}${nt?`<div class="small">${esc(nt)}</div>`:''}</div><div class="vbtns" role="group" aria-label="${esc(l)}">${Array.from({length:n},(_,v)=>`<button data-q="${f.id}${k}" data-qv="${v}" aria-pressed="${S.q[f.id+k]===v}">${v}</button>`).join('')}</div></div>`).join('');
+   f.items.map(([k,l,nt])=>`<div class="qf row"><div class="ql">${k}. ${esc(l)}${nt?`<div class="small">${esc(nt)}</div>`:''}</div><div class="vbtns" role="group" aria-label="${esc(l)}">${Array.from({length:n},(_,v)=>`<button data-q="${f.id}${k}" data-qv="${v}" aria-pressed="${qn(f.id+k)===v}"${qn(f.id+k)===v&&qFromPt(f.id+k)?' class="ptv" title="Risposta del paziente"':''}>${v}</button>`).join('')}</div></div>`).join('');
   if(f.opt) return `<details class="qopt optitem" data-ui="${f.id}" ${S.ui&&S.ui[f.id]?'open':''}><summary><span class="tag opt">FACOLTATIVO</span> ${esc(f.title)}</summary>${body}</details>`;
   return body;
 }
 function fieldHTML(f){
-  const v=S.q[f.id];
+  const v=PTMIR.has(f.id)?qn(f.id):S.q[f.id], pv=qFromPt(f.id), pc=k=>v===k&&pv?' ptv':'';
   if(f.t==='yn') return `<div class="qf"><div class="ql">${esc(f.l)}</div>${segQ(f.id,v)}</div>`;
-  if(f.t==='sel') return `<div class="qf"><div class="ql">${esc(f.l)}</div><div class="qopts" role="group" aria-label="${esc(f.l)}">${f.o.map(([k,l])=>`<button class="chipb" data-q="${f.id}" data-qv="${k}" aria-pressed="${v===k}">${esc(l)}</button>`).join('')}</div></div>`;
-  if(f.t==='s10') return `<div class="qf"><div class="ql">${esc(f.l)}</div><div class="vbtns" role="group" aria-label="${esc(f.l)}">${[0,1,2,3,4,5,6,7,8,9,10].map(n=>`<button data-q="${f.id}" data-qv="${n}" aria-pressed="${v===n}">${n}</button>`).join('')}</div></div>`;
-  if(f.t==='num') return `<div class="qf"><div class="ql">${esc(f.l)}</div><label class="qnl"><input class="qnum" inputmode="numeric" data-qn="${f.id}" value="${esc(v==null?'':v)}"> ${f.u}</label></div>`;
+  if(f.t==='sel') return `<div class="qf"><div class="ql">${esc(f.l)}</div><div class="qopts" role="group" aria-label="${esc(f.l)}">${f.o.map(([k,l])=>`<button class="chipb${pc(k)}" data-q="${f.id}" data-qv="${k}" aria-pressed="${v===k}">${esc(l)}</button>`).join('')}</div></div>`;
+  if(f.t==='s10') return `<div class="qf"><div class="ql">${esc(f.l)}</div><div class="vbtns" role="group" aria-label="${esc(f.l)}">${[0,1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="${pc(n)}" data-q="${f.id}" data-qv="${n}" aria-pressed="${v===n}">${n}</button>`).join('')}</div></div>`;
+  if(f.t==='num') return `<div class="qf"><div class="ql">${esc(f.l)}</div><label class="qnl"><input class="qnum" inputmode="numeric" data-qn="${f.id}" value="${esc(qEmpty(S.q[f.id])?'':S.q[f.id])}"${pv?` placeholder="${esc(v)}" title="Risposta del paziente"`:''}> ${f.u}</label>${pv?`<div class="ptnote">Il paziente ha risposto ${esc(v)} ${esc(f.u)}: scrivi un valore solo se vuoi modificarlo.</div>`:''}</div>`;
   if(f.t==='item') return itemHTML(byId[f.id]);
   if(f.t==='h') return `<div class="qh">${esc(f.l)}</div>`;
   if(f.t==='txt') return `<div class="qf"><label class="ql" for="qt-${f.id}">${esc(f.l)}</label><textarea class="pf" id="qt-${f.id}" data-qt="${f.id}">${esc(S.q[f.id]||'')}</textarea></div>`;
   if(f.t==='multi'){ const m=S.q[f.id]||{}; return `<div class="qf"><div class="ql">${esc(f.l)}</div><div class="qopts" role="group" aria-label="${esc(f.l)}">${f.o.map(([k,l])=>`<button class="chipb" data-qm="${f.id}|${k}" aria-pressed="${!!m[k]}">${esc(l)}</button>`).join('')}</div></div>` }
   if(f.t==='lik') return likHTML(f);
+  if(f.t==='teeth') return `<div class="qf"><div class="ql">${esc(f.l)}</div><div id="fdbox">${fdInner()}</div></div>`;
   return '';
 }
+
+// ---------- Formula dentale ----------
+const FD_ARCH={sup:[18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28],inf:[48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38]};
+const FD_NAME={sup:'mascellare superiore',inf:'mandibola'};
+const FD_IMPL='<svg viewBox="0 0 16 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2h10l-1 5H4z" fill="currentColor" fill-opacity=".25"/><path d="M5 9h6l-1 13H6z"/><path d="M4.6 12h6.8M4.8 15h6.4M5.1 18h5.8"/></svg>';
+const FD_HINT={X:'Tocca i denti mancanti.',I:'Tocca i denti sostituiti da un impianto (ai fini della scheda l\'impianto conta come dente presente).',A:'Voce facoltativa: tocca i denti assenti per agenesia.',C:'Tocca il dente con la corona singola.',R:'Tocca i denti sostituiti da una protesi rimovibile (parziale o totale): contano come mancanti.',P:'Tocca il primo pilastro, poi l\'ultimo: la parentesi copre pilastri ed elementi intermedi. Segna gli elementi intermedi come mancanti. Tocca un dente del ponte per toglierlo.'};
+let FDM='X', FDA=null;
+function fdS(){ const f=S.q.fd||(S.q.fd={}); f.s=f.s||{}; f.p=f.p||{sup:[],inf:[]}; f.p.sup=f.p.sup||[]; f.p.inf=f.p.inf||[]; return f }
+function fdEmpty(f){ return !f||(!Object.keys(f.s||{}).length&&!((f.p&&f.p.sup||[]).length)&&!((f.p&&f.p.inf||[]).length)&&!f.t8&&!f.full) }
+function fdClassify(f,a){
+  const T=FD_ARCH[a].filter(n=>f.t8||n%10!==8), miss=n=>f.s[n]==='X'||f.s[n]==='A'||f.s[n]==='R';
+  const pres=T.map(n=>!miss(n)), nm=pres.filter(x=>!x).length, m8=FD_ARCH[a].filter(n=>n%10===8&&miss(n));
+  if(!nm) return {est:null,tipi:[],m8};
+  if(nm===T.length) return {est:'totale',tipi:[],m8};
+  const t=new Set(); let i=0;
+  while(i<pres.length){ if(pres[i]){i++;continue} let j=i; while(j<pres.length&&!pres[j]) j++; t.add(i===0||j===pres.length?'distale':'intercalata'); i=j }
+  return {est:'parziale',tipi:['distale','intercalata'].filter(x=>t.has(x)),m8};
+}
+function fdLines(f){
+  const out=[]; if(!f) return out;
+  if(f.full&&!Object.values(f.s||{}).some(v=>v==='X'||v==='A'||v==='R')) out.push('dentatura permanente completa (verificata)');
+  for(const a in FD_ARCH){
+    const r=fdClassify(f,a), L=k=>FD_ARCH[a].filter(n=>f.s[n]===k).sort((x,y)=>x-y);
+    const X=L('X'),I=L('I'),A=L('A'),R=L('R'), P=f.p[a]||[];
+    const cr=P.filter(q=>q[0]===q[1]).map(q=>FD_ARCH[a][q[0]]).sort((x,y)=>x-y);
+    const br=P.filter(q=>q[0]!==q[1]).map(q=>[FD_ARCH[a][q[0]],FD_ARCH[a][q[1]]].sort((x,y)=>x-y).join('–'));
+    const d=[];
+    if(r.est) d.push('edentulia '+r.est+(r.tipi.length?' '+r.tipi.join(' e '):'')); else if(r.m8.length) d.push('mancanti solo terzi molari');
+    if(X.length) d.push('mancanti '+X.join(', ')); if(A.length) d.push('agenesie '+A.join(', ')); if(R.length) d.push('sostituiti da protesi rimovibile '+R.join(', ')); if(I.length) d.push('impianti '+I.join(', '));
+    if(br.length) d.push('ponti '+br.join(', ')); if(cr.length) d.push('corone singole '+cr.join(', '));
+    if(d.length) out.push(FD_NAME[a]+': '+d.join(', '));
+  }
+  return out;
+}
+function fdInner(){
+  const f=S.q.fd||{s:{},p:{sup:[],inf:[]}};
+  const M=[['X','X&nbsp;Mancante'],['I','<span style="display:inline-flex;width:12px">'+FD_IMPL+'</span>Impianto'],['C','⌐¬&nbsp;Corona singola'],['P','⌐‾¬&nbsp;Ponte'],['R','P&nbsp;Protesi rimovibile'],['A','A&nbsp;Agenesia (facoltativo)']];
+  let h='<div class="fdmodes" role="group" aria-label="Cosa segnare">'+M.map(([k,l])=>`<button class="chipb${k==='A'?' fdopt':''}" data-fdm="${k}" aria-pressed="${FDM===k}">${l}</button>`).join('')+'</div>';
+  h+=`<div class="fdhint">${esc(FD_HINT[FDM]+(FDA?' Ora tocca l\'ultimo pilastro.':''))}</div><div class="fdsides"><span>Destra del paziente</span><span>Sinistra del paziente</span></div>`;
+  for(const a of ['sup','inf']){
+    if(a==='inf') h+='<div class="fdocc" aria-hidden="true"></div>';
+    else h+='<div class="fdlbl">Arcata superiore</div>';
+    h+='<div class="fdarch">'+((f.p&&f.p[a])||[]).map(q=>`<div class="fdbr${q[0]===q[1]?' cr':''}" style="grid-column:${q[0]+1} / ${q[1]+2}"></div>`).join('');
+    h+=FD_ARCH[a].map((n,i)=>{ const st=f.s&&f.s[n]; const c=['fdt']; if(n%10===8)c.push('m8'); if(i===7)c.push('mid'); if(st)c.push('s'+st); if(FDA&&FDA[0]===a&&FDA[1]===i)c.push('anc');
+      const lab={X:'mancante',I:'impianto',A:'agenesia',R:'protesi rimovibile'}[st];
+      return `<button class="${c.join(' ')}" style="grid-column:${i+1}" data-fdn="${n}" aria-label="Dente ${n}${lab?', '+lab:''}" title="${n}">${st==='X'?'X':st==='A'?'A':st==='R'?'P':st==='I'?FD_IMPL:n}</button>` }).join('')+'</div>';
+    if(a==='inf') h+='<div class="fdlbl">Arcata inferiore</div>';
+  }
+  h+=`<div class="fdleg"><span><b style="color:var(--warn)">X</b> mancante</span><span><b style="color:var(--warn)">A</b> agenesia</span><span><b style="color:var(--fdp)">P</b> protesi rimovibile</span><span><span style="color:var(--fdp);display:inline-flex;width:11px">${FD_IMPL}</span> impianto</span><span><i></i> corona o ponte</span></div>`;
+  h+=`<div class="qopts" style="margin-top:8px"><button class="chipb" data-fdt8="1" aria-pressed="${!!f.t8}">Considera i terzi molari nella classificazione</button><button class="chipb" data-fdfull="1" aria-pressed="${!!f.full}">Dentatura completa verificata</button><button class="chipb" data-fdreset="1">Azzera lo schema</button></div>`;
+  h+='<div class="small" id="fdmsg" role="status" hidden style="margin-top:6px;color:var(--warn)"></div>';
+  const L=fdLines(S.q.fd&&!fdEmpty(S.q.fd)?fdS():null);
+  h+=`<div class="fdres">${L.length?L.map(esc).join('<br>'):'Nessun dente segnato. Se hai controllato e non manca nessun dente, premi "Dentatura completa verificata".'}</div>`;
+  if(S.q.ed!=null){ const o=[]; if(S.q.ed===1)o.push('edentulia'); else o.push('nessuna edentulia'); const ms=id=>Object.keys(S.q[id]||{}).join(', '); if(S.q.edest!=null)o.push(S.q.edest==2?'totale':'parziale'); if(ms('edarc'))o.push('arcata: '+ms('edarc').replace('sup','superiore').replace('inf','inferiore')); if(ms('edtipo'))o.push('tipo: '+ms('edtipo').replace('dist','distale').replace('int','intercalata'));
+    h+=`<div class="small" style="margin-top:6px">Dato precedente (versione vecchia della scheda, sola lettura): ${esc(o.join(', '))}.</div>` }
+  h+='<div class="small" style="margin-top:6px">I terzi molari (bordo tratteggiato) per impostazione non contano per estensione e tipo di edentulia. Gli impianti contano come denti presenti; i denti sostituiti da protesi rimovibile contano come mancanti.</div>';
+  return h;
+}
+function fdTap(n){
+  const f=fdS(); let a,i; for(const k in FD_ARCH){const j=FD_ARCH[k].indexOf(n); if(j>=0){a=k;i=j}}
+  if(FDM==='X'||FDM==='I'||FDM==='A'||FDM==='R'){ if(f.s[n]===FDM) delete f.s[n]; else { f.s[n]=FDM; if(FDM!=='I') delete f.full } return }
+  const L=f.p[a];
+  if(FDM==='C'){ const k=L.findIndex(q=>q[0]===i&&q[1]===i); if(k>=0){L.splice(k,1);return} if(L.some(q=>i>=q[0]&&i<=q[1])) return; L.push([i,i]); return }
+  const k=L.findIndex(q=>q[0]!==q[1]&&i>=q[0]&&i<=q[1]);
+  if(!FDA&&k>=0){L.splice(k,1);return}
+  if(!FDA||FDA[0]!==a){FDA=[a,i];return}
+  const x=Math.min(FDA[1],i),y=Math.max(FDA[1],i); FDA=null; if(x===y) return;
+  f.p[a]=L.filter(q=>q[1]<x||q[0]>y); f.p[a].push([x,y]);
+}
+function fdRedraw(){ const f=S.q.fd; if(f&&fdEmpty(f)) delete S.q.fd; const e=$('#fdbox'); if(e) e.innerHTML=fdInner(); refresh() }
+
 const CALC={pain:()=>qPainHTML(),psy:()=>qPsyHTML(),jfls:()=>qJflsHTML()};
 function qFieldsHTML(g){
   let h='',skipped=false;
+  const hasPt=g.f.some(f=>f.t==='lik'?f.items.some(([k])=>qFromPt(f.id+k)):qFromPt(f.id));
+  if(hasPt) h+='<div class="ptnote">Le risposte con il bordo tratteggiato sono quelle date dal paziente nel questionario. La compilazione qui è facoltativa: puoi lasciarle o toccare un altro valore per modificarle. Se tocchi di nuovo un valore che hai scelto tu, torna la risposta del paziente.</div>';
   g.f.forEach(f=>{ if(f.dep&&S.q[f.dep]===0){skipped=true;return} h+=fieldHTML(f) });
   if(skipped) h+=`<div class="small" style="margin:4px 0">Risposta NO: le voci collegate sono nascoste.</div>`;
   if(g.calc) h+=`<div class="qcalc" id="qc-${g.calc}">${CALC[g.calc]()}</div>`;
@@ -1529,22 +1661,24 @@ function qReport(P){
   const sel=(id,arr)=>{const v=qn(id); const f=arr.find(x=>x[0]===v); return f?f[1]:null};
   if(S.q.qanam) L.push('Anamnesi: '+S.q.qanam); if(S.q.qter) L.push('Terapia farmacologica: '+S.q.qter);
   const ms=id=>Object.keys(S.q[id]||{}); const lb=(id,k)=>(QG.g1.f.find(x=>x.id===id).o.find(o=>o[0]===k)||[0,k])[1];
-  const O=[]; if(S.q.ed===1){ const a=ms('edarc').map(k=>lb('edarc',k)).join(' e '),e=sel('edest',QG.g1.f.find(x=>x.id==='edest').o),tp=ms('edtipo').map(k=>lb('edtipo',k)).join(' e '); O.push('edentulia'+(e?' '+e:'')+(a?' ('+a+')':'')+(tp?', '+tp:'')) } else if(S.q.ed===0) O.push('nessuna edentulia');
+  const O=[]; const FL=S.q.fd&&!fdEmpty(S.q.fd)?fdLines(fdS()):[]; if(FL.length) O.push(FL.join('; ')); else if(S.q.ed===1){ const a=ms('edarc').map(k=>lb('edarc',k)).join(' e '),e=sel('edest',QG.g1.f.find(x=>x.id==='edest').o),tp=ms('edtipo').map(k=>lb('edtipo',k)).join(' e '); O.push('edentulia'+(e?' '+e:'')+(a?' ('+a+')':'')+(tp?', '+tp:'')) } else if(S.q.ed===0) O.push('nessuna edentulia');
   const cl=sel('qcl',QG.g1.f.find(x=>x.id==='qcl').o); if(cl) O.push(cl+' dentale'); if(S.q.dvo===1) O.push('perdita della DVO'); else if(S.q.dvo===0) O.push('DVO conservata');
   if(qn('ovj')!=null) O.push('overjet '+qn('ovj')+' mm'); if(qn('ovb')!=null) O.push('overbite '+qn('ovb')+' mm');
   const sp=sel('spee',QG.g1.f.find(x=>x.id==='spee').o),wi=sel('wil',QG.g1.f.find(x=>x.id==='wil').o); if(sp) O.push('curva di Spee '+sp); if(wi) O.push('curva di Wilson '+wi);
   if(S.q.fac===1) O.push('faccette di usura o abrasioni presenti (segno clinico, può essere storico)'); const er=sel('ero',QG.g1.f.find(x=>x.id==='ero').o); if(er) O.push('erosioni '+er); if(S.q.mob===1) O.push('denti mobili');
-  if(S.q.prot===1){ const pt=ms('protipo').map(k=>lb('protipo',k)).join(', '); O.push('portatore di protesi'+(pt?' ('+pt+')':'')) } else if(S.q.prot===0) O.push('nessuna protesi');
+  if(S.q.prot===1&&!FL.length){ const PM={fissa:'fissa',par:'parziale removibile',tot:'totale removibile'}; const pt=ms('protipo').map(k=>PM[k]||k).join(', '); O.push('portatore di protesi, dato precedente'+(pt?' ('+pt+')':'')) }
   if(O.length) L.push('Salute orale: '+O.join('; '));
   if(S.q.q3===0) L.push('Nessun dolore facciale nell\'ultimo mese');
   else if(S.q.q3===1){ const a=qn('q4a'),b=qn('q4b'); const es=[a!=null?a+' anni':null,b!=null?b+' mesi':null].filter(Boolean).join(' '); const dec=sel('q5',QG.g2.f.find(x=>x.id==='q5').o),con=sel('q6',QG.g2.f.find(x=>x.id==='q6').o),fr=sel('qfreq',QG.g2.f.find(x=>x.id==='qfreq').o),du=sel('qdur',QG.g2.f.find(x=>x.id==='qdur').o);
     L.push('Dolore facciale nell\'ultimo mese'+(es?', esordio '+es+' fa':'')+(dec?', '+dec:'')+(fr?', frequenza: '+fr:'')+(du?', durata episodi: '+du:'')+(S.q.qdurn?' ('+S.q.qdurn+')':'')+(con?', consulti: '+con:'')) }
   if(S.q.qtrat) L.push('Terapie già eseguite per il dolore: '+S.q.qtrat); if(S.q.qfarmd) L.push('Farmaci assunti per il dolore: '+S.q.qfarmd);
-  if(R.pain) L.push('Grado del dolore cronico (versione 2.0): '+R.pain.txt+(R.pain.d6!=null?'; giorni con dolore negli ultimi 6 mesi: '+R.pain.d6:''));
-  if(R.jfls) L.push('Limitazione funzionale (JFLS-8): '+(R.jfls.m==null?'non calcolabile ('+R.jfls.n+' risposte su 8)':fmt1(R.jfls.m)+' su 10'));
+  const srcTx=ids=>{const pt=ids.filter(qFromPt).length, cl=ids.filter(i=>!qEmpty(S.q[i])).length; return !pt?'':cl?' [in parte riferito dal paziente, in parte modificato dal clinico]':' [riferito dal paziente]'};
+  const GCI=['gc1','gc2','gc3','gc4','gc5','gc6','gc7','gc8'], JFI=JFLS.map(([k])=>'jf'+k), P4I=['p41','p42','p43','p44','p4f'];
+  if(R.pain) L.push('Grado del dolore cronico (versione 2.0): '+R.pain.txt+(R.pain.d6!=null?'; giorni con dolore negli ultimi 6 mesi: '+R.pain.d6:'')+srcTx(GCI));
+  if(R.jfls) L.push('Limitazione funzionale (JFLS-8): '+(R.jfls.m==null?'non calcolabile ('+R.jfls.n+' risposte su 8)':fmt1(R.jfls.m)+' su 10')+srcTx(JFI));
   if(S.q.q14a===1) L.push('Mandibola bloccata in passato'+(S.q.q14b===1?', con compromissione della masticazione':''));
   const cf=sel('qcef',QG.g7.f[0].o); if(cf) L.push('Cefalea: '+cf);
-  psyTexts(R).forEach(x=>L.push(x)); if(R.alert) L.push('PHQ-9, domanda 9: pensieri di morte o di farsi del male segnalati');
+  psyTexts(R).forEach(x=>L.push(x+(/^PHQ-4/.test(x)?srcTx(P4I):''))); if(R.alert) L.push('PHQ-9, domanda 9: pensieri di morte o di farsi del male segnalati');
   {const d=sel('p4f',DIFF); if(d) L.push('Difficoltà nella vita quotidiana per questi problemi: '+d)}
   if(!L.length) return;
   P('Intervista strutturata',11,true); L.forEach(x=>P(' - '+x));
@@ -1697,8 +1831,14 @@ document.addEventListener('click',e=>{
   if(D.vv){ const [k,n]=D.vv.split('|'); S[k]=(S[k]===+n)?null:+n; repaintPain(); refresh(); return }
   if(D.pq){ if(S.pq[D.pq]) delete S.pq[D.pq]; else S.pq[D.pq]=1; applyCombo(); renderSection(); refresh(); return }
   if(D.q){ const id=D.q,v=+D.qv; if(S.q[id]===v) delete S.q[id]; else S.q[id]=v;
+    if(PTMIR.has(id)){ renderSection(); refresh(); return }
     if(Object.values(QG).some(g=>g.f.some(f=>f.dep===id))) renderSection(); else { b.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',S.q[id]===+x.dataset.qv)); qRefresh() }
     refresh(); return }
+  if(D.fdm){ FDM=D.fdm; FDA=null; fdRedraw(); return }
+  if(D.fdn){ const n=+D.fdn; fdTap(n); fdRedraw(); const nb=document.querySelector(`[data-fdn="${n}"]`); if(nb) nb.focus(); return }
+  if(D.fdt8){ const f=fdS(); if(f.t8) delete f.t8; else f.t8=1; fdRedraw(); return }
+  if(D.fdfull){ const f=fdS(); if(f.full) delete f.full; else { if(Object.values(f.s).some(v=>v==='X'||v==='A'||v==='R')){ flash('#fdmsg','Ci sono denti segnati come mancanti: azzera lo schema o togli le X, P, A prima di confermare la dentatura completa.',true); return } f.full=1 } fdRedraw(); return }
+  if(D.fdreset){ delete S.q.fd; FDA=null; fdRedraw(); return }
   if(D.qm){ const [id,k]=D.qm.split('|'); const m=S.q[id]||(S.q[id]={}); if(m[k]) delete m[k]; else m[k]=1; if(!Object.keys(m).length) delete S.q[id]; b.setAttribute('aria-pressed',!!m[k]); refresh(); return }
   if(D.gc){ const [g,r,c]=D.gc.split('|'); const G=S.grid[g]||(S.grid[g]={}); const k=r+'|'+c; if(G[k]) delete G[k]; else G[k]=1; applyCombo(); renderSection(); refresh(); return }
   if(D.psede){ S.psede=S.psede===D.psede?'':D.psede; renderSection(); refresh(); return }
@@ -1763,7 +1903,7 @@ document.addEventListener('input',e=>{
   if(t.id&&t.id.startsWith('m-')){ S.meas[t.id.slice(2)]=t.value; applyMeasures(); const id=t.id,p=t.selectionStart; renderSection(); const el=document.getElementById(id); el.focus(); el.setSelectionRange(p,p); refresh() }
   if(t.id&&t.id.startsWith('x-')){ S.meas[t.id.slice(2)]=t.value; const xi=$('#xinfo'); if(xi) xi.textContent=endfeelInfo().join(' '); refresh() }
   if(t.id==='freenote'){S.free=t.value;persist()}
-  if(t.dataset&&t.dataset.ptn!==undefined){ const v=t.value.replace(/[^0-9]/g,''); if(v!==t.value) t.value=v; if(v==='') delete S.pt[t.dataset.ptn]; else S.pt[t.dataset.ptn]=v; persist() }
+  if(t.dataset&&t.dataset.ptn!==undefined){ const v=t.value.replace(/[^0-9]/g,''); if(v!==t.value) t.value=v; if(v==='') delete S.pt[t.dataset.ptn]; else { const mx=+t.dataset.ptmax; S.pt[t.dataset.ptn]=(mx&&+v>mx)?String(mx):v; if(mx&&+v>mx) t.value=String(mx) } persist() }
   if(t.dataset&&t.dataset.qn){ const v=t.value.trim(); if(v==='') delete S.q[t.dataset.qn]; else{const n=parseFloat(v.replace(',','.')); if(!isNaN(n)) S.q[t.dataset.qn]=n} qRefresh(); refresh() }
   if(t.dataset&&t.dataset.exf){ const [k,f]=t.dataset.exf.split('|'); if(S.exams&&S.exams[+k]){ S.exams[+k][f]=t.value; persist() } }
   if(t.dataset&&t.dataset.qt){ if(t.value) S.q[t.dataset.qt]=t.value; else delete S.q[t.dataset.qt]; persist() }
