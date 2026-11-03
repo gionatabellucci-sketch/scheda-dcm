@@ -1,5 +1,5 @@
 // Programma di memoria della Scheda DCM: permette l'uso senza rete. Non contiene dati di pazienti.
-const CACHE='scheda-dcm-414a1e7971';
+const CACHE='scheda-dcm-24220db427';
 const CORE=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>Promise.all(CORE.map(u=>c.add(u).catch(()=>{})))).then(()=>self.skipWaiting()))});

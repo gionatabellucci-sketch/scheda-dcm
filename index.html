@@ -416,7 +416,7 @@ const CGRP=DATA.cgrp, CDX=DATA.cdx, CCLS=DATA.ccls, CPAR=DATA.cpar, CIDS=DATA.ci
 const DEF_M = Object.fromEntries(ALL.map(i=>[i.id,[...i.m]]));
 const DEF_MW = Object.fromEntries(ALL.map(i=>[i.id,{...i.mw}]));
 /* ---------- versione della scheda e impronta della matrice ---------- */
-const APP_VER='58', APP_BUILD='fdd59414';
+const APP_VER='58', APP_BUILD='18123ec3';
 function fnv(str){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0 } return h.toString(16).padStart(8,'0') }
 function mxKey(mw,conds){ return JSON.stringify([conds,ALL.map(i=>[i.id,Object.entries(mw[i.id]||{}).filter(([,v])=>v).sort((a,b)=>a[0]-b[0])])]) }
 const MX_DEF=fnv(mxKey(DEF_MW,DATA.conds));
@@ -602,11 +602,14 @@ function ptRender(){
 function ptOrder(O){ const ix=O.map((o,k)=>k), no=O.findIndex(o=>o.t==='No'), si=O.findIndex(o=>o.t==='Sì');
   const first=(no>=0&&si>=0)?[no,si]:[]; const rest=ix.filter(k=>!first.includes(k)&&!O[k].ns), ns=ix.filter(k=>O[k].ns&&!first.includes(k)); return first.concat(rest,ns) }
 function ptAnswer(k,o){ S.pt[k]=o; applyPatient(); persist(); ptRender() }
+/* pagina senza domande attive (per esempio tutte dipendenti da una risposta No): si salta */
+function ptEmpty(k){ return typeof k==='number'&&!PTQ[k].q.some(q=>!q.x&&pqActive(q)) }
 function ptGo(a){
   if(a==='open'){ PT.msg='';PT.back='clin'; if(!hasPin()){PT.view='set';PT.next='open';return ptShow()} return ptShowQ() }
   if(a==='chpin'){ PT.msg='';PT.back='clin';PT.next='none';PT.view=hasPin()?'chgold':'set'; return ptShow() }
-  if(a==='next'){ PT.p=Math.min(PT.p+1,ptPages().length-1); ptRender(); $('#ptov').scrollTop=0; return }
-  if(a==='prev'){ PT.p=Math.max(PT.p-1,0); ptRender(); $('#ptov').scrollTop=0; return }
+  if(a==='next'||a==='prev'){ const pg=ptPages(), d=a==='next'?1:-1;
+    let k=PT.p+d; while(k>0&&k<pg.length-1&&ptEmpty(pg[k])) k+=d;
+    PT.p=Math.max(0,Math.min(k,pg.length-1)); ptRender(); $('#ptov').scrollTop=0; return }
   if(a==='exit'){ PT.msg='';PT.back='q';PT.view='enter'; return ptRender() }
   if(a==='pcancel'){ PT.msg=''; if(PT.back==='clin'){ $('#ptov').hidden=true;document.body.style.overflow='';return } PT.view='q'; return ptRender() }
   if(a==='pinok'){
