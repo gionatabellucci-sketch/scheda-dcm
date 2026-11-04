@@ -293,6 +293,8 @@ table.mx tr.sec td{background:var(--surface2);font-weight:600;font-size:12px;pad
 .fdleg i{display:inline-block;width:16px;height:7px;border:2px solid var(--fdp);border-bottom:0}
 .fdres{font-size:14px;margin-top:8px;background:var(--accent-soft);border-radius:8px;padding:8px 10px}
 :root{--fdp:#5a4bb0;--fdp-soft:#e7e3f8}
+.qf.qmod{background:var(--fdp-soft);border-left:4px solid var(--fdp);border-radius:8px;padding:8px 10px;margin:6px 0}
+.tagmod{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--fdp);border:1px solid var(--fdp);border-radius:999px;padding:1px 8px;margin-right:4px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fdp:#b3a6ff;--fdp-soft:#2a2547}}
 :root[data-theme="dark"]{--fdp:#b3a6ff;--fdp-soft:#2a2547}
 </style>
@@ -416,7 +418,7 @@ const CGRP=DATA.cgrp, CDX=DATA.cdx, CCLS=DATA.ccls, CPAR=DATA.cpar, CIDS=DATA.ci
 const DEF_M = Object.fromEntries(ALL.map(i=>[i.id,[...i.m]]));
 const DEF_MW = Object.fromEntries(ALL.map(i=>[i.id,{...i.mw}]));
 /* ---------- versione della scheda e impronta della matrice ---------- */
-const APP_VER='60', APP_BUILD='9c69d63e';
+const APP_VER='61', APP_BUILD='c264600a';
 function fnv(str){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0 } return h.toString(16).padStart(8,'0') }
 function mxKey(mw,conds){ return JSON.stringify([conds,ALL.map(i=>[i.id,Object.entries(mw[i.id]||{}).filter(([,v])=>v).sort((a,b)=>a[0]-b[0])])]) }
 const MX_DEF=fnv(mxKey(DEF_MW,DATA.conds));
@@ -468,6 +470,7 @@ const PTQ_P4={g:'Come si è sentito',dc:1,gi:'Nelle ultime 2 settimane, quanto s
 const PTQ=[
 {g:'Dolore alla mandibola e alle tempie',dc:1,q:[
  {k:'scr1',t:'Negli ultimi 30 giorni, quali delle seguenti condizioni descrive meglio il dolore alla mandibola o nella zona delle tempie su uno o su entrambi i lati?',o:obo(['Nessun dolore','Il dolore va e viene','Il dolore è sempre presente'])},
+ {k:'sq1',dep:[['scr1',[0]]],t:'Ha mai avuto dolore alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio su uno dei due lati?',h:'Anche se non negli ultimi 30 giorni.',o:NY([])},
  {k:'scr2',t:'Negli ultimi 30 giorni, ha avuto dolore o rigidità alla mandibola al risveglio?',o:NY(['a3'])},
  {k:'scr3',x:1,dep:[['scr1',[1,2]]],t:'Negli ultimi 30 giorni, le seguenti attività hanno modificato il dolore (cioè lo hanno migliorato o peggiorato) alla mandibola o nella zona delle tempie su uno o su entrambi i lati?'},
  {k:'scr3a',dep:[['scr1',[1,2]]],t:'A. Mangiare cibo duro o resistente',o:NY(['a6','k2'])},
@@ -475,9 +478,8 @@ const PTQ=[
  {k:'scr3c',dep:[['scr1',[1,2]]],t:'C. Abitudini mandibolari, come mantenere i denti a contatto, serrare/digrignare, o masticare gomme',o:NY(['a6','k2'])},
  {k:'scr3d',dep:[['scr1',[1,2]]],t:'D. Altre attività della mandibola come parlare, baciare o sbadigliare',o:NY(['a6','k2'])}]},
 {g:'Dolore',dc:1,gi:'Alcune domande somigliano a quelle della pagina precedente: fanno parte di un altro questionario. Risponda comunque a tutte.',q:[
- {k:'sq1',t:'Ha mai avuto dolore alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio su uno dei due lati?',o:NY([])},
- {k:'sq2',ym:1,dep:[['sq1',[1]]],t:'Quanti anni o mesi fa è iniziato il dolore alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio?'},
- {k:'sq3',dep:[['sq1',[1]]],t:'Negli ultimi 30 giorni, quali delle seguenti situazioni descrive meglio il dolore alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio su uno dei due lati?',h:'Scelga una risposta.',o:obo(['Nessun dolore','Dolore che va e viene','Dolore sempre presente'])},
+ {k:'sq2',ym:1,gate:'pain',t:'Quanti anni o mesi fa è iniziato il dolore alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio?'},
+ {k:'sq3',gate:'pain',t:'Negli ultimi 30 giorni, quali delle seguenti situazioni descrive meglio il dolore alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio su uno dei due lati?',h:'Scelga una risposta.',o:obo(['Nessun dolore','Dolore che va e viene','Dolore sempre presente'])},
  {k:'sq4',x:1,dep:[['sq3',[1,2]]],t:'Negli ultimi 30 giorni, qualcuna delle seguenti attività ha cambiato il dolore (cioè lo ha peggiorato o migliorato) alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio su uno dei due lati?'},
  ...MODQ('sq4',['a6','k2'],'gomme').map(q=>Object.assign(q,{dep:[['sq3',[1,2]]]}))]},
 PTQ_GC,
@@ -530,7 +532,7 @@ const PTSVG={nopen:'<svg viewBox="0 0 430 192" role="img" aria-label="Disegno: a
 const PTQALL=PTQ.flatMap(g=>g.q); const PTQK={}; PTQALL.forEach(q=>PTQK[q.k]=q);
 function pqOpts(q){ if(q.o) return q.o; if(q.x||q.ym||q.num) return []; const y=q.y,n=q.n===undefined?q.y:q.n; return [{t:'Sì',a:y.map(i=>[i,1])},{t:'No',a:n.map(i=>[i,0])},{t:'Non so',a:[],ns:1}] }
 /* cancello del dolore: risposta positiva alla prima domanda di pagina 1 (ultimi 30 giorni) oppure di pagina 2 (mai) */
-function ptPainGate(){ const P=S.pt||{}; return P.scr1===1||P.scr1===2||P.sq1===1 }
+function ptPainGate(){ const P=S.pt||{}; return P.scr1===1||P.scr1===2||(P.scr1===0&&P.sq1===1) }
 function pqActive(q){ if(q&&q.gate==='pain'&&!ptPainGate()) return false; if(!q||!q.dep) return true; const D=typeof q.dep==='string'?[[q.dep,[0]]]:q.dep; return D.every(([k,v])=>v.includes(S.pt[k])&&pqActive(PTQK[k])) }
 function ptActs(){ const A={}; PTQALL.forEach(q=>{ const a=S.pt[q.k]; if(a==null||!pqActive(q)) return;
     ((pqOpts(q)[a]||{a:[]}).a||[]).forEach(([id,val])=>{ A[id]=Math.max(A[id]==null?-1:A[id],val) }) }); return A }
@@ -552,8 +554,8 @@ function ptLines(){
   const s=ptScreener();
   if(s.score!=null) L.push('Screening del dolore: '+s.score+' su 7, '+(s.pos?'positivo':'negativo')+' (positivo se 3 o più)'+(s.skip?'; domande 3A-3D non poste per assenza di dolore e contate 0 (scelta del progetto: il modulo ufficiale non prevede salti)':''));
   else if(s.n) L.push('Screening del dolore incompleto ('+s.n+' risposte su 6): punteggio non calcolabile');
-  if(P.sq1===1){ const m=mods('sq4'); L.push('Dolore a mandibola, tempia o orecchio: sì'+(ym('sq2')?', iniziato '+ym('sq2')+' fa':'')+(txt('sq3')?'; negli ultimi 30 giorni: '+txt('sq3').toLowerCase():'')+(m.length?'; modificato da: '+m.join('; '):'')) }
-  else if(P.sq1===0) L.push('Dolore a mandibola, tempia o orecchio: mai');
+  if(ptPainGate()){ const m=mods('sq4'); L.push('Dolore a mandibola, tempia o orecchio: sì'+(ym('sq2')?', iniziato '+ym('sq2')+' fa':'')+(txt('sq3')?'; negli ultimi 30 giorni: '+txt('sq3').toLowerCase():'')+(m.length?'; modificato da: '+m.join('; '):'')) }
+  else if(P.scr1===0&&P.sq1===0) L.push('Dolore a mandibola, tempia o orecchio: mai');
   if(P.sq5===1){ const m=mods('sq7'); L.push('Mal di testa alle tempie negli ultimi 30 giorni: sì'+(ym('sq6')?', iniziato '+ym('sq6')+' fa':'')+(m.length?'; modificato da: '+m.join('; '):'')) }
   else if(P.sq5===0) L.push('Mal di testa alle tempie negli ultimi 30 giorni: no');
   if(P.a14!=null&&P.a14<3) L.push('Dolore vicino all\'orecchio: '+PTQK.a14.o[P.a14].t.toLowerCase());
@@ -732,7 +734,6 @@ function compute(){
   if(S.v.e3===1&&S.v.e0===1) flags.push('Apertura limitata e ipermobilità segnate entrambe.');
   if(S.v.e17===1&&S.v.e16===1) flags.push('Endfeel con apertura limitata e non limitata segnati entrambi.');
   if(S.v.e18===1&&(S.v.e19===1||S.v.e20===1||S.v.e21===1)) flags.push('Lateralità conservate segnate insieme a lateralità limitata o dolorosa.');
-  if(S.pt&&(S.pt.scr1===1||S.pt.scr1===2)&&S.pt.sq1===0) flags.push('Questionario del paziente: riferisce dolore negli ultimi 30 giorni (pagina 1) ma dice di non aver mai avuto dolore (pagina 2). Chiarisci in visita.');
   if(S.v.p1!=null&&S.v.p2===1) flags.push('Blocco anestetico compilato ma la risposta al placebo è positiva: il blocco non viene pesato.');
   if(S.v.p1!=null&&S.v.p2!==1&&S.psede&&S.psede!=='art') flags.push('Blocco anestetico compilato in sede non articolare: non viene pesato.');
   {const v=S.v, hy=ldS, R=[];
@@ -1464,8 +1465,8 @@ const QG={
    {id:'qcl',l:'Classe dentale',t:'sel',o:[[1,'I classe'],[2,'II classe'],[3,'III classe']]},
    {id:'dvo',l:'Perdita della dimensione verticale di occlusione (DVO)',t:'yn'},
    {id:'ovj',l:'Overjet',t:'num',u:'mm'},{id:'ovb',l:'Overbite',t:'num',u:'mm'},
-   {id:'spee',l:'Curva di Spee (da valutare su modelli e/o scansioni)',t:'sel',o:[[1,'accentuata'],[2,'normale'],[3,'inversa']]},
-   {id:'wil',l:'Curva di Wilson (da valutare su modelli e/o scansioni)',t:'sel',o:[[1,'normale'],[2,'inversa']]},
+   {id:'spee',mod:1,l:'Curva di Spee (da valutare su modelli e/o scansioni)',t:'sel',o:[[1,'accentuata'],[2,'normale'],[3,'inversa']]},
+   {id:'wil',mod:1,l:'Curva di Wilson (da valutare su modelli e/o scansioni)',t:'sel',o:[[1,'normale'],[2,'inversa']]},
    {id:'fac',l:'Faccette di usura o abrasioni (segno clinico, può essere anche storico e non indica attività attuale: esamina superfici occlusali e margini incisivi; se eccentriche vedi il test di provocazione, sezione 10)',t:'yn'},
    {id:'ero',l:'Erosioni',t:'sel',o:[[1,'presenti'],[2,'assenti']]},
    {id:'mob',l:'Denti mobili',t:'yn'},
@@ -1527,7 +1528,7 @@ function likHTML(f){
 function fieldHTML(f){
   const v=PTMIR.has(f.id)?qn(f.id):S.q[f.id], pv=qFromPt(f.id), pc=k=>v===k&&pv?' ptv':'';
   if(f.t==='yn') return `<div class="qf"><div class="ql">${esc(f.l)}</div>${segQ(f.id,v)}</div>`;
-  if(f.t==='sel') return `<div class="qf"><div class="ql">${esc(f.l)}</div><div class="qopts" role="group" aria-label="${esc(f.l)}">${f.o.map(([k,l])=>`<button class="chipb${pc(k)}" data-q="${f.id}" data-qv="${k}" aria-pressed="${v===k}">${esc(l)}</button>`).join('')}</div></div>`;
+  if(f.t==='sel') return `<div class="qf${f.mod?' qmod':''}"><div class="ql">${f.mod?'<span class="tagmod">MODELLI / SCANSIONI</span> ':''}${esc(f.l)}</div><div class="qopts" role="group" aria-label="${esc(f.l)}">${f.o.map(([k,l])=>`<button class="chipb${pc(k)}" data-q="${f.id}" data-qv="${k}" aria-pressed="${v===k}">${esc(l)}</button>`).join('')}</div></div>`;
   if(f.t==='s10') return `<div class="qf"><div class="ql">${esc(f.l)}</div><div class="vbtns" role="group" aria-label="${esc(f.l)}">${[0,1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="${pc(n)}" data-q="${f.id}" data-qv="${n}" aria-pressed="${v===n}">${n}</button>`).join('')}</div></div>`;
   if(f.t==='num') return `<div class="qf"><div class="ql">${esc(f.l)}</div><label class="qnl"><input class="qnum" inputmode="numeric" data-qn="${f.id}" value="${esc(qEmpty(S.q[f.id])?'':S.q[f.id])}"${pv?` placeholder="${esc(v)}" title="Risposta del paziente"`:''}> ${f.u}</label>${pv?`<div class="ptnote">Il paziente ha risposto ${esc(v)} ${esc(f.u)}: scrivi un valore solo se vuoi modificarlo.</div>`:''}</div>`;
   if(f.t==='item') return itemHTML(byId[f.id]);
