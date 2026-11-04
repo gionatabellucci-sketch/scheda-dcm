@@ -418,7 +418,7 @@ const CGRP=DATA.cgrp, CDX=DATA.cdx, CCLS=DATA.ccls, CPAR=DATA.cpar, CIDS=DATA.ci
 const DEF_M = Object.fromEntries(ALL.map(i=>[i.id,[...i.m]]));
 const DEF_MW = Object.fromEntries(ALL.map(i=>[i.id,{...i.mw}]));
 /* ---------- versione della scheda e impronta della matrice ---------- */
-const APP_VER='63', APP_BUILD='16424746';
+const APP_VER='64', APP_BUILD='481a17a0';
 function fnv(str){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0 } return h.toString(16).padStart(8,'0') }
 function mxKey(mw,conds){ return JSON.stringify([conds,ALL.map(i=>[i.id,Object.entries(mw[i.id]||{}).filter(([,v])=>v).sort((a,b)=>a[0]-b[0])])]) }
 const MX_DEF=fnv(mxKey(DEF_MW,DATA.conds));
@@ -876,7 +876,8 @@ function renderSection(){
   $('#sectitle').textContent=s.n+'. '+s.title;
   const ms=MEAS_BY_SEC[s.n]||[];
   const _pg=s.n===2&&!painShown();
-  $('#measure').innerHTML=(s.n===2?(_pg?`<div class="note-info">${qn('q3')===0?'Nessun dolore facciale riferito (sezione 1): le voci sul dolore sono nascoste e non contano nel calcolo.':'Rispondi prima alla domanda sul dolore facciale (sezione 1): le voci sul dolore compaiono con la risposta Sì.'}</div>`:(qn('q3')==null?'<div class="note-warn">Rispondi alla domanda sul dolore facciale (sezione 1): le voci qui sotto sono mostrate perché il caso contiene già dati sul dolore.</div>':'')+painBlock()):'')+(ms.length?`<div class="measure">${ms.map(id=>measureBlock(NORM.find(n=>n.id===id))).join('')}</div>`:'')+xmBlock(s.n)+(s.n===7?gridBlock('aus'):'')+(s.n===8?palBlock()+gridBlock('iso')+gridBlock('din'):'');
+  const _jf=s.n===3?jflsBlock():'';
+  $('#measure').innerHTML=_jf+(s.n===2?(_pg?`<div class="note-info">${qn('q3')===0?'Nessun dolore facciale riferito (sezione 1): le voci sul dolore sono nascoste e non contano nel calcolo.':'Rispondi prima alla domanda sul dolore facciale (sezione 1): le voci sul dolore compaiono con la risposta Sì.'}</div>`:(qn('q3')==null?'<div class="note-warn">Rispondi alla domanda sul dolore facciale (sezione 1): le voci qui sotto sono mostrate perché il caso contiene già dati sul dolore.</div>':'')+painBlock()):'')+(ms.length?`<div class="measure">${ms.map(id=>measureBlock(NORM.find(n=>n.id===id))).join('')}</div>`:'')+xmBlock(s.n)+(s.n===7?gridBlock('aus'):'')+(s.n===8?palBlock()+gridBlock('iso')+gridBlock('din'):'');
   $('#rmnblock').innerHTML=s.rmn?rmnBlock():'';
   let h='';
   const _red=(s.red||[]).filter(r=>r.id!=='r_scossa'||!_pg);
@@ -933,7 +934,7 @@ function itemsHTML(s){
   const gh=(g)=>`<h3 class="gh">${esc(g.t)}</h3>${g.hint?`<div class="small ghint">${esc(g.hint)}</div>`:''}`;
   if(s.n===1){
     const used=new Set(); let h='';
-    Object.keys(QG).forEach(k=>{ const g=QG[k]; const inl=new Set(g.f.filter(f=>f.t==='item').map(f=>f.id)); inl.forEach(x=>used.add(x));
+    Object.keys(QG).filter(k=>k!=='g8').forEach(k=>{ const g=QG[k]; const inl=new Set(g.f.filter(f=>f.t==='item').map(f=>f.id)); inl.forEach(x=>used.add(x));
       let its=s.items.filter(i=>i.grp===k&&!inl.has(i.id)); its.forEach(i=>used.add(i.id));
       if(k==='g6'){ const P=S.pt||{}, ans=its.filter(i=>P[i.id]!=null&&PTQK[i.id]&&pqActive(PTQK[i.id]));
         if(ans.length&&!(S.ui&&S.ui.g6all)){ const yes=its.filter(i=>P[i.id]===0&&pqActive(PTQK[i.id])||(S.v[i.id]===1&&!(S.ref&&S.ref[i.id]))), hid=its.length-yes.length;
@@ -1630,6 +1631,19 @@ function fdTap(n){
 }
 function fdRedraw(){ const f=S.q.fd; if(f&&fdEmpty(f)) delete S.q.fd; const e=$('#fdbox'); if(e) e.innerHTML=fdInner(); refresh() }
 
+/* scala JFLS-8 nella sezione 3: solo le attivita' con limitazione riferita superiore a 4/10 */
+function jflsBlock(){
+  const f=QG.g8.f[0], all=S.ui&&S.ui.jflsall;
+  const vals=JFLS.map(([k])=>qn('jf'+k)), any=vals.some(v=>v!=null), fromPt=JFLS.some(([k])=>ptQv('jf'+k)!=null);
+  let h=`<div class="grp jfblk"><h3 class="gh">Limitazione funzionale della mandibola (JFLS-8)</h3>`;
+  if(all){ h+=`<div class="small ghint">${esc(QG.g8.hint)}</div>`+likHTML(f)+`<div class="qopts" style="margin-top:6px"><button class="chipb" data-jfall="0">Mostra solo le voci superiori a 4</button></div>` }
+  else if(any){ const hi=JFLS.filter(([k])=>(qn('jf'+k)||0)>4);
+    h+=`<div class="ptnote">${fromPt?'Riferita dal paziente nel questionario. ':''}Compaiono solo le attività con limitazione superiore a 4/10 (${hi.length} su 8). Puoi correggere un valore toccandone un altro.</div>`;
+    h+=hi.length?likHTML(Object.assign({},f,{items:hi})):`<div class="small">Nessuna attività con limitazione superiore a 4/10.</div>`;
+    h+=`<div class="qopts" style="margin-top:6px"><button class="chipb" data-jfall="1">Mostra tutta la scala</button></div>` }
+  else h+=`<div class="small">Il paziente non ha compilato la scala nel questionario.</div><div class="qopts" style="margin-top:6px"><button class="chipb" data-jfall="1">Compila qui la scala</button></div>`;
+  return h+`<div class="qcalc" id="qc-jfls">${CALC.jfls?CALC.jfls():qJflsHTML()}</div></div>`;
+}
 const CALC={pain:()=>qPainHTML(),psy:()=>qPsyHTML(),jfls:()=>qJflsHTML()};
 function qFieldsHTML(g){
   let h='',skipped=false;
@@ -1871,6 +1885,7 @@ document.addEventListener('click',e=>{
     if(PTMIR.has(id)){ renderSection(); refresh(); return }
     if(Object.values(QG).some(g=>g.f.some(f=>f.dep===id))) renderSection(); else { b.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',S.q[id]===+x.dataset.qv)); qRefresh() }
     refresh(); return }
+  if(D.jfall!==undefined){ S.ui=S.ui||{}; if(D.jfall==='1') S.ui.jflsall=1; else delete S.ui.jflsall; renderSection(); refresh(); return }
   if(D.g6all!==undefined){ S.ui=S.ui||{}; if(D.g6all==='1') S.ui.g6all=1; else delete S.ui.g6all; renderSection(); refresh(); return }
   if(D.fdm){ FDM=D.fdm; FDA=null; fdRedraw(); return }
   if(D.fdn){ const n=+D.fdn; fdTap(n); fdRedraw(); const nb=document.querySelector(`[data-fdn="${n}"]`); if(nb) nb.focus(); return }
