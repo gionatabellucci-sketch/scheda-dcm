@@ -418,7 +418,7 @@ const CGRP=DATA.cgrp, CDX=DATA.cdx, CCLS=DATA.ccls, CPAR=DATA.cpar, CIDS=DATA.ci
 const DEF_M = Object.fromEntries(ALL.map(i=>[i.id,[...i.m]]));
 const DEF_MW = Object.fromEntries(ALL.map(i=>[i.id,{...i.mw}]));
 /* ---------- versione della scheda e impronta della matrice ---------- */
-const APP_VER='61', APP_BUILD='c264600a';
+const APP_VER='62', APP_BUILD='2c3e99ee';
 function fnv(str){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0 } return h.toString(16).padStart(8,'0') }
 function mxKey(mw,conds){ return JSON.stringify([conds,ALL.map(i=>[i.id,Object.entries(mw[i.id]||{}).filter(([,v])=>v).sort((a,b)=>a[0]-b[0])])]) }
 const MX_DEF=fnv(mxKey(DEF_MW,DATA.conds));
@@ -658,7 +658,12 @@ function applyMeasures(){
 
 /* ---------- calcolo ---------- */
 const NOCOUNT=new Set(['i7','a8','a9']);
-function ncv(id){ return (NOCOUNT.has(id)&&S.ref&&S.ref[id])?undefined:S.v[id] }
+/* cancello del dolore nella scheda del medico: le voci sul dolore valgono solo se la domanda sul dolore facciale e' Si' */
+let PAINIDS=null;
+function painIds(){ if(!PAINIDS){ PAINIDS=new Set(['i7','i7b']); (SECS.find(x=>x.n===2)||{items:[]}).items.forEach(i=>PAINIDS.add(i.id)) } return PAINIDS }
+function painLegacy(){ for(const id of painIds()) if(S.v[id]!=null) return true; if(S.vas!=null||S.vmax!=null||S.vmin!=null) return true; if(Object.values(S.pain||{}).some(a=>a&&a.length)) return true; return Object.keys(S.pq||{}).length>0 }
+function painShown(){ const q=qn('q3'); return q===1||(q==null&&painLegacy()) }
+function ncv(id){ if(painIds().has(id)&&!painShown()) return undefined; return (NOCOUNT.has(id)&&S.ref&&S.ref[id])?undefined:S.v[id] }
 function val(i){return i.eff?i.eff():ncv(i.id)}
 function bucketStats(ci,sc){
   const B={};
@@ -758,7 +763,7 @@ function compute(){
   if(S.v.i24===1&&pk.some(k=>S.pain[k].includes('Dx')&&pk.some(j=>S.pain[j].includes('Sx')))) flags.push('Dolore monolaterale segnato ma la mappa riporta sedi su entrambi i lati.');
   if(numv('dev_a')!=null&&numv('dev_a')>2&&S.v.e5===0) flags.push('Deviazione in apertura misurata ('+numv('dev_a')+' mm) ma la voce "Apertura deviata" è NO.');
   if(numv('dev_a')!=null&&numv('dev_a')<=2&&S.v.e5===1) flags.push('"Apertura deviata" segnata ma la deviazione misurata è '+numv('dev_a')+' mm (fino a 2 mm non è anomala).');
-  const rf=(SECS[1].red||[]).filter(r=>S.red[r.id]===1);
+  const rf=(SECS[1].red||[]).filter(r=>S.red[r.id]===1&&(r.id!=='r_scossa'||painShown()));
   const flagged=ALL.filter(i=>S.flag[i.id]||(i.id==='g3'&&S.v.g3===1)||(i.alert&&S.v[i.id]===1));
   const _qs=qScores();
   if(_qs.alert) flagged.unshift({id:'x_psy',label:'Questionario PHQ-9 (domanda 9): pensieri di morte o di farsi del male segnalati. Valuta subito con il paziente e invia a un professionista della salute mentale'});
@@ -862,11 +867,13 @@ function renderSection(){
   const s=SECS[S.sec];
   $('#sectitle').textContent=s.n+'. '+s.title;
   const ms=MEAS_BY_SEC[s.n]||[];
-  $('#measure').innerHTML=(s.n===2?painBlock():'')+(ms.length?`<div class="measure">${ms.map(id=>measureBlock(NORM.find(n=>n.id===id))).join('')}</div>`:'')+xmBlock(s.n)+(s.n===7?gridBlock('aus'):'')+(s.n===8?palBlock()+gridBlock('iso')+gridBlock('din'):'');
+  const _pg=s.n===2&&!painShown();
+  $('#measure').innerHTML=(s.n===2?(_pg?`<div class="note-info">${qn('q3')===0?'Nessun dolore facciale riferito (sezione 1): le voci sul dolore sono nascoste e non contano nel calcolo.':'Rispondi prima alla domanda sul dolore facciale (sezione 1): le voci sul dolore compaiono con la risposta Sì.'}</div>`:(qn('q3')==null?'<div class="note-warn">Rispondi alla domanda sul dolore facciale (sezione 1): le voci qui sotto sono mostrate perché il caso contiene già dati sul dolore.</div>':'')+painBlock()):'')+(ms.length?`<div class="measure">${ms.map(id=>measureBlock(NORM.find(n=>n.id===id))).join('')}</div>`:'')+xmBlock(s.n)+(s.n===7?gridBlock('aus'):'')+(s.n===8?palBlock()+gridBlock('iso')+gridBlock('din'):'');
   $('#rmnblock').innerHTML=s.rmn?rmnBlock():'';
   let h='';
-  if(s.red) h+=`<div class="small" style="margin-bottom:4px">Red flag: se presenti il DCM va escluso e serve un approfondimento medico.</div>`+s.red.map(r=>`<div class="item"><div class="lblrow"><div class="lbl">${r.label}</div></div>${seg(r.id,true)}</div>`).join('')+'<div style="height:10px"></div>';
-  h+=itemsHTML(s);
+  const _red=(s.red||[]).filter(r=>r.id!=='r_scossa'||!_pg);
+  if(_red.length) h+=`<div class="small" style="margin-bottom:4px">Red flag: se presenti il DCM va escluso e serve un approfondimento medico.</div>`+_red.map(r=>`<div class="item"><div class="lblrow"><div class="lbl">${r.label}</div></div>${seg(r.id,true)}</div>`).join('')+'<div style="height:10px"></div>';
+  h+=_pg?'':itemsHTML(s);
   $('#items').innerHTML=h;
   $('#prev').disabled=S.sec===0;
   $('#next').textContent=S.sec===SECS.length-1?'Vai alla dashboard':'Avanti';
@@ -1472,7 +1479,7 @@ const QG={
    {id:'mob',l:'Denti mobili',t:'yn'},
 ]},
  g2:{t:'Dolore facciale: esordio e decorso',hint:'Se nell\'ultimo mese non c\'è stato dolore, le domande su esordio, decorso e intensità si saltano.',f:[
-   {id:'q3',l:'Nell\'ultimo mese ha avuto dolore a faccia, mandibola, regione temporale o preauricolare, o all\'orecchio?',t:'yn'},
+   {id:'q3',l:'Nell\'ultimo mese, o in passato, ha avuto dolore a faccia, mandibola, regione temporale o preauricolare, o all\'orecchio?',t:'yn'},
    {t:'h',l:'Esordio'},
    {id:'q4a',l:'Da quanti anni è comparso il dolore facciale (0 se meno di un anno)',t:'num',u:'anni',dep:'q3'},{id:'q4b',l:'Da quanti mesi (se meno di un anno)',t:'num',u:'mesi',dep:'q3'},
    {t:'item',id:'i7'},
@@ -1512,8 +1519,9 @@ const QG={
    {id:'p15',t:'lik',opt:1,title:'PHQ-15 (sintomi fisici)',stem:'Nelle ultime 4 settimane, quanto è stato disturbato da ciascuno dei seguenti problemi?',items:PHQ15,o:P15O}]}
 };
 const GH2={oss:{t:'Osservazioni generali'},cerv:{t:'Screening della colonna cervicale',pre:()=>palBlock('cerv')},cervm:{t:'Parte facoltativa',pre:()=>'<div class="optbox"><b>Da qui in poi tutte le voci sono FACOLTATIVE.</b> Non entrano nel punteggio finale: vengono riportate nelle conclusioni, accanto al risultato della dashboard.</div>'+gridBlock('mob')},tc:{t:'TC / CBCT (facoltativo)',pre:()=>'<div class="optbox"><b>Voci FACOLTATIVE:</b> pesano nel risultato solo se compilate.</div>'},neuro:{t:'Screening neurologico (nervi cranici)',hint:'Segna SÌ se trovi un\'alterazione: qualsiasi alterazione compare tra i punti da approfondire dal medico.'}};
-const PTMIR=new Set(['gc1','gc2','gc3','gc4','gc5','gc6','gc7','gc8','jf1','jf2','jf3','jf4','jf5','jf6','jf7','jf8','p41','p42','p43','p44','p4f']);
-function ptQv(id){ if(!PTMIR.has(id)||!S.pt) return null; const q=PTQK[id], a=S.pt[id]; if(a==null||a===''||!q||!pqActive(q)) return null; return q.num?+a:(a+(q.off||0)) }
+const PTMIR=new Set(['q3','gc1','gc2','gc3','gc4','gc5','gc6','gc7','gc8','jf1','jf2','jf3','jf4','jf5','jf6','jf7','jf8','p41','p42','p43','p44','p4f']);
+function ptQv(id){ if(!PTMIR.has(id)||!S.pt) return null;
+  if(id==='q3'){ const P=S.pt; if(ptPainGate()) return 1; if(P.scr1===0&&P.sq1===0) return 0; return null } const q=PTQK[id], a=S.pt[id]; if(a==null||a===''||!q||!pqActive(q)) return null; return q.num?+a:(a+(q.off||0)) }
 const qEmpty=v=>v===undefined||v===null||v==='';
 const qn=id=>{const v=S.q[id]; if(!qEmpty(v)) return +v; return ptQv(id)};
 const qFromPt=id=>qEmpty(S.q[id])&&ptQv(id)!=null;
@@ -1527,7 +1535,7 @@ function likHTML(f){
 }
 function fieldHTML(f){
   const v=PTMIR.has(f.id)?qn(f.id):S.q[f.id], pv=qFromPt(f.id), pc=k=>v===k&&pv?' ptv':'';
-  if(f.t==='yn') return `<div class="qf"><div class="ql">${esc(f.l)}</div>${segQ(f.id,v)}</div>`;
+  if(f.t==='yn') return `<div class="qf${pv?' ptv':''}"><div class="ql">${esc(f.l)}${pv?`<div class="ptnote">Dal questionario del paziente: ${v===1?'Sì':'No'}. Tocca una risposta per confermare o cambiare.</div>`:''}</div>${segQ(f.id,v)}</div>`;
   if(f.t==='sel') return `<div class="qf${f.mod?' qmod':''}"><div class="ql">${f.mod?'<span class="tagmod">MODELLI / SCANSIONI</span> ':''}${esc(f.l)}</div><div class="qopts" role="group" aria-label="${esc(f.l)}">${f.o.map(([k,l])=>`<button class="chipb${pc(k)}" data-q="${f.id}" data-qv="${k}" aria-pressed="${v===k}">${esc(l)}</button>`).join('')}</div></div>`;
   if(f.t==='s10') return `<div class="qf"><div class="ql">${esc(f.l)}</div><div class="vbtns" role="group" aria-label="${esc(f.l)}">${[0,1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="${pc(n)}" data-q="${f.id}" data-qv="${n}" aria-pressed="${v===n}">${n}</button>`).join('')}</div></div>`;
   if(f.t==='num') return `<div class="qf"><div class="ql">${esc(f.l)}</div><label class="qnl"><input class="qnum" inputmode="numeric" data-qn="${f.id}" value="${esc(qEmpty(S.q[f.id])?'':S.q[f.id])}"${pv?` placeholder="${esc(v)}" title="Risposta del paziente"`:''}> ${f.u}</label>${pv?`<div class="ptnote">Il paziente ha risposto ${esc(v)} ${esc(f.u)}: scrivi un valore solo se vuoi modificarlo.</div>`:''}</div>`;
@@ -1615,8 +1623,8 @@ function qFieldsHTML(g){
   let h='',skipped=false;
   const hasPt=g.f.some(f=>f.t==='lik'?f.items.some(([k])=>qFromPt(f.id+k)):qFromPt(f.id));
   if(hasPt) h+='<div class="ptnote">Le risposte con il bordo tratteggiato sono quelle date dal paziente nel questionario. La compilazione qui è facoltativa: puoi lasciarle o toccare un altro valore per modificarle. Se tocchi di nuovo un valore che hai scelto tu, torna la risposta del paziente.</div>';
-  g.f.forEach(f=>{ if(f.dep&&S.q[f.dep]===0){skipped=true;return} h+=fieldHTML(f) });
-  if(skipped) h+=`<div class="small" style="margin:4px 0">Risposta NO: le voci collegate sono nascoste.</div>`;
+  g.f.forEach(f=>{ if(f.dep==='q3'?!painShown():(f.dep&&S.q[f.dep]===0)){skipped=true;return} if(f.t==='item'&&painIds().has(f.id)&&!painShown()){skipped=true;return} h+=fieldHTML(f) });
+  if(skipped) h+=`<div class="small" style="margin:4px 0">${qn('q3')==null&&g.f.some(f=>f.dep==='q3')?'Rispondi alla domanda sul dolore facciale: le voci collegate compaiono con la risposta Sì.':'Risposta NO: le voci collegate sono nascoste.'}</div>`;
   if(g.calc) h+=`<div class="qcalc" id="qc-${g.calc}">${CALC[g.calc]()}</div>`;
   return h;
 }
@@ -1630,7 +1638,7 @@ function likSum(id,n,maxMiss){
 function band(o,cuts,names){ if(!o||o.s==null) return o; let i=0; cuts.forEach((c,j)=>{if(o.s>=c)i=j+1}); o.c=names[i]; return o }
 function qScores(){
   const R={pain:null,jfls:null,phq4:null,phq9:null,gad7:null,phq15:null,alert:false};
-  if(S.q.q3===0) R.pain={grade:'0',txt:'Grado 0: nessun dolore nell\'ultimo mese'};
+  if(qn('q3')===0) R.pain={grade:'0',txt:'Grado 0: nessun dolore'};
   else{
     const I=['gc2','gc3','gc4'].map(qn), F=['gc6','gc7','gc8'].map(qn).filter(x=>x!=null), d=qn('gc5');
     if(I.some(x=>x!=null)||F.length||d!=null){
@@ -1685,8 +1693,8 @@ function qReport(P){
   if(S.q.fac===1) O.push('faccette di usura o abrasioni presenti (segno clinico, può essere storico)'); const er=sel('ero',QG.g1.f.find(x=>x.id==='ero').o); if(er) O.push('erosioni '+er); if(S.q.mob===1) O.push('denti mobili');
   if(S.q.prot===1&&!FL.length){ const PM={fissa:'fissa',par:'parziale removibile',tot:'totale removibile'}; const pt=ms('protipo').map(k=>PM[k]||k).join(', '); O.push('portatore di protesi, dato precedente'+(pt?' ('+pt+')':'')) }
   if(O.length) L.push('Salute orale: '+O.join('; '));
-  if(S.q.q3===0) L.push('Nessun dolore facciale nell\'ultimo mese');
-  else if(S.q.q3===1){ const a=qn('q4a'),b=qn('q4b'); const es=[a!=null?a+' anni':null,b!=null?b+' mesi':null].filter(Boolean).join(' '); const dec=sel('q5',QG.g2.f.find(x=>x.id==='q5').o),con=sel('q6',QG.g2.f.find(x=>x.id==='q6').o),fr=sel('qfreq',QG.g2.f.find(x=>x.id==='qfreq').o),du=sel('qdur',QG.g2.f.find(x=>x.id==='qdur').o);
+  if(qn('q3')===0) L.push('Nessun dolore facciale, né nell\'ultimo mese né in passato');
+  else if(qn('q3')===1){ const a=qn('q4a'),b=qn('q4b'); const es=[a!=null?a+' anni':null,b!=null?b+' mesi':null].filter(Boolean).join(' '); const dec=sel('q5',QG.g2.f.find(x=>x.id==='q5').o),con=sel('q6',QG.g2.f.find(x=>x.id==='q6').o),fr=sel('qfreq',QG.g2.f.find(x=>x.id==='qfreq').o),du=sel('qdur',QG.g2.f.find(x=>x.id==='qdur').o);
     L.push('Dolore facciale nell\'ultimo mese'+(es?', esordio '+es+' fa':'')+(dec?', '+dec:'')+(fr?', frequenza: '+fr:'')+(du?', durata episodi: '+du:'')+(S.q.qdurn?' ('+S.q.qdurn+')':'')+(con?', consulti: '+con:'')) }
   if(S.q.qtrat) L.push('Terapie già eseguite per il dolore: '+S.q.qtrat); if(S.q.qfarmd) L.push('Farmaci assunti per il dolore: '+S.q.qfarmd);
   const srcTx=ids=>{const pt=ids.filter(qFromPt).length, cl=ids.filter(i=>!qEmpty(S.q[i])).length; return !pt?'':cl?' [in parte riferito dal paziente, in parte modificato dal clinico]':' [riferito dal paziente]'};
@@ -1800,7 +1808,7 @@ function psyInfo(){
   const score=it.reduce((a,x)=>a+x.w,0);
   const level=!n?null:score===0?'non rilevata':score<=2?'bassa':score<=4?'moderata':'rilevante';
   const sig=[]; {const a=+S.q.q4a||0,b=+S.q.q4b||0, has=S.q.q4a!=null||S.q.q4b!=null, mo=a*12+b; const hi=level==='moderata'||level==='rilevante';
-   if(S.q.q3===1&&has&&mo>3&&hi) sig.push('Quadro cronico (dolore da '+(a?(a===1?'1 anno':a+' anni'):'')+(a&&b?' e ':'')+(b?(b===1?'1 mese':b+' mesi'):(a?'':'meno di un anno'))+') con sfera psicologico-emotiva '+level+': da considerare nel piano di cura e nella valutazione.');
+   if(qn('q3')===1&&has&&mo>3&&hi) sig.push('Quadro cronico (dolore da '+(a?(a===1?'1 anno':a+' anni'):'')+(a&&b?' e ':'')+(b?(b===1?'1 mese':b+' mesi'):(a?'':'meno di un anno'))+') con sfera psicologico-emotiva '+level+': da considerare nel piano di cura e nella valutazione.');
    if(S.v.q_serr===1&&hi) sig.push('Serramento o tensione diurna della mandibola riferiti dal paziente (bruxismo da veglia riferito): da considerare insieme alla sfera psicologico-emotiva.')}
   return {score,level,items:it,known:n,alert:q.alert,signals:sig};
 }
