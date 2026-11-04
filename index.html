@@ -418,7 +418,7 @@ const CGRP=DATA.cgrp, CDX=DATA.cdx, CCLS=DATA.ccls, CPAR=DATA.cpar, CIDS=DATA.ci
 const DEF_M = Object.fromEntries(ALL.map(i=>[i.id,[...i.m]]));
 const DEF_MW = Object.fromEntries(ALL.map(i=>[i.id,{...i.mw}]));
 /* ---------- versione della scheda e impronta della matrice ---------- */
-const APP_VER='62', APP_BUILD='2c3e99ee';
+const APP_VER='63', APP_BUILD='16424746';
 function fnv(str){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0 } return h.toString(16).padStart(8,'0') }
 function mxKey(mw,conds){ return JSON.stringify([conds,ALL.map(i=>[i.id,Object.entries(mw[i.id]||{}).filter(([,v])=>v).sort((a,b)=>a[0]-b[0])])]) }
 const MX_DEF=fnv(mxKey(DEF_MW,DATA.conds));
@@ -500,6 +500,14 @@ PTQ_JF,
 {g:'Abitudini della bocca durante il sonno',dc:1,gi:OBCGI,q:OBCI.slice(0,2).map((t,i)=>({k:'obc'+(i+1),t:(i+1)+'. '+t,o:obo(OBN),vert:1}))},
 {g:'Abitudini della bocca durante il giorno',dc:1,gi:OBCGI,q:OBCI.slice(2).map((t,i)=>({k:'obc'+(i+3),t:(i+3)+'. '+t,o:obo(OBD),vert:1}))},
 PTQ_P4,
+{g:'Malattie generali e traumi',gi:OURGI,q:[
+ {k:'q_artr',t:'Un medico le ha diagnosticato artrite reumatoide, lupus o un\'altra malattia reumatica delle articolazioni?',y:['q_artr']},
+ {k:'q_artrf',t:'Qualcuno della sua famiglia (genitori, fratelli o sorelle, figli) ha una malattia reumatica delle articolazioni?',y:['q_artrf']},
+ {k:'q_fibro',t:'Un medico le ha diagnosticato la fibromialgia?',y:['q_fibro']},
+ {k:'q_altart',t:'Ha dolore o gonfiore ad altre articolazioni, per esempio mani, ginocchia o spalle?',y:['q_altart']},
+ {k:'q_trauma',t:'Negli ultimi mesi ha preso un colpo, ha avuto una caduta o un incidente alla faccia o alla mandibola?',y:['q_trauma']},
+ {k:'q_pretr',dep:[['q_trauma',[0]]],t:'Aveva già dolore alla mandibola prima di quel colpo?',y:['q_pretr']},
+ {k:'i11',t:'Ha cicatrici sul viso o sul mento, per esempio dopo una caduta, o ha avuto in passato un colpo di frusta?',y:['i11']}]},
 {g:'Altre domande sul dolore',gi:OURGI,q:[
  {k:'qual',gate:'pain',t:'Quale di queste parole descrive meglio il suo dolore?',h:'Scelga quella più vicina a ciò che sente.',vert:1,o:[{t:'Sordo, come un peso o una pressione',a:[['a4',1]]},{t:'Pulsante, che batte',a:[['a4',0]],pq:'pulsante'},{t:'Una fitta o una scossa',a:[['a4',0]],pq:'trafittivo'},{t:'Bruciante',a:[['a4',0]],pq:'bruciante'},{t:'Non so',a:[],ns:1}]},
  {k:'lat',gate:'pain',t:'Il dolore è da una sola parte del viso o da tutte e due?',o:[{t:'Da una sola parte',a:[['i24',1],['a5',0]]},{t:'Da tutte e due le parti',a:[['a5',1],['i24',0]]},{t:'Non so',a:[],ns:1}]},
@@ -926,7 +934,11 @@ function itemsHTML(s){
   if(s.n===1){
     const used=new Set(); let h='';
     Object.keys(QG).forEach(k=>{ const g=QG[k]; const inl=new Set(g.f.filter(f=>f.t==='item').map(f=>f.id)); inl.forEach(x=>used.add(x));
-      const its=s.items.filter(i=>i.grp===k&&!inl.has(i.id)); its.forEach(i=>used.add(i.id));
+      let its=s.items.filter(i=>i.grp===k&&!inl.has(i.id)); its.forEach(i=>used.add(i.id));
+      if(k==='g6'){ const P=S.pt||{}, ans=its.filter(i=>P[i.id]!=null&&PTQK[i.id]&&pqActive(PTQK[i.id]));
+        if(ans.length&&!(S.ui&&S.ui.g6all)){ const yes=its.filter(i=>P[i.id]===0&&pqActive(PTQK[i.id])||(S.v[i.id]===1&&!(S.ref&&S.ref[i.id]))), hid=its.length-yes.length;
+          its=yes; h+=`<div class="grp">${gh(g)}<div class="ptnote">Dal questionario del paziente compaiono solo le risposte Sì (${yes.length}); il paziente ha risposto No o Non so alle altre ${hid} voci. <button class="chipb" data-g6all="1">Mostra tutte</button></div></div>`+its.map(itemHTML).join(''); return }
+        if(ans.length) h+=`<div class="ptnote"><button class="chipb" data-g6all="0">Mostra solo le risposte Sì del paziente</button></div>`; }
       h+=g.after?`<div class="grp">${gh(g)}</div>`+its.map(itemHTML).join('')+`<div class="grp">${qFieldsHTML(g)}</div>`:`<div class="grp">${gh(g)}${qFieldsHTML(g)}</div>`+its.map(itemHTML).join('') });
     return h+s.items.filter(i=>!used.has(i.id)).map(itemHTML).join('');
   }
@@ -1859,6 +1871,7 @@ document.addEventListener('click',e=>{
     if(PTMIR.has(id)){ renderSection(); refresh(); return }
     if(Object.values(QG).some(g=>g.f.some(f=>f.dep===id))) renderSection(); else { b.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',S.q[id]===+x.dataset.qv)); qRefresh() }
     refresh(); return }
+  if(D.g6all!==undefined){ S.ui=S.ui||{}; if(D.g6all==='1') S.ui.g6all=1; else delete S.ui.g6all; renderSection(); refresh(); return }
   if(D.fdm){ FDM=D.fdm; FDA=null; fdRedraw(); return }
   if(D.fdn){ const n=+D.fdn; fdTap(n); fdRedraw(); const nb=document.querySelector(`[data-fdn="${n}"]`); if(nb) nb.focus(); return }
   if(D.fdt8){ const f=fdS(); if(f.t8) delete f.t8; else f.t8=1; fdRedraw(); return }
