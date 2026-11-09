@@ -418,7 +418,7 @@ const CGRP=DATA.cgrp, CDX=DATA.cdx, CCLS=DATA.ccls, CPAR=DATA.cpar, CIDS=DATA.ci
 const DEF_M = Object.fromEntries(ALL.map(i=>[i.id,[...i.m]]));
 const DEF_MW = Object.fromEntries(ALL.map(i=>[i.id,{...i.mw}]));
 /* ---------- versione della scheda e impronta della matrice ---------- */
-const APP_VER='67', APP_BUILD='a1d2ee98';
+const APP_VER='68', APP_BUILD='10434ae1';
 function fnv(str){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0 } return h.toString(16).padStart(8,'0') }
 function mxKey(mw,conds){ return JSON.stringify([conds,ALL.map(i=>[i.id,Object.entries(mw[i.id]||{}).filter(([,v])=>v).sort((a,b)=>a[0]-b[0])])]) }
 const MX_DEF=fnv(mxKey(DEF_MW,DATA.conds));
@@ -464,7 +464,7 @@ const PTQ_GC={g:'Intensità e impatto del dolore',dc:1,gi:'Risponda pensando al 
  ...PTGC.map(([k,t])=>({k,sc:['Nessun dolore','Il dolore peggiore che possa esistere'],gate:'pain',t,o:SC10()})),
  {k:'gc5',num:1,max:30,u:'giorni',gate:'pain',t:'Negli ULTIMI 30 GIORNI, per quanti giorni il dolore al volto le ha impedito di svolgere le sue ATTIVITÀ ABITUALI, come il lavoro, la scuola o le faccende domestiche?',h:'Scriva un numero da 0 a 30.'},
  ...PTGI.map(([k,t])=>({k,sc:['Nessuna interferenza','Incapace di svolgere ogni attività'],gate:'pain',t,o:SC10()}))]};
-const PTQ_JF={g:'Uso della mandibola',dc:1,gi:'Per ogni attività indichi quanto è stata limitata negli ultimi 30 giorni, da 0 (nessuna limitazione) a 10 (limitazione grave). Se ha evitato del tutto l\'attività perché troppo difficile, scelga 10. Se l\'ha evitata per altri motivi, salti la domanda.',
+const PTQ_JF={g:'Limitazioni nelle attività della bocca',dc:1,gi:'Per ogni attività indichi quanto è stata limitata negli ultimi 30 giorni, da 0 (nessuna limitazione) a 10 (limitazione grave). Se ha evitato del tutto l\'attività perché troppo difficile, scelga 10. Se l\'ha evitata per altri motivi, salti la domanda.',
  q:JFLS.map(([k,t])=>({k:'jf'+k,sc:['Nessuna limitazione','Limitazione grave'],t:k+'. '+t,o:SC10()}))};
 const PTQ_P4={g:'Come si è sentito',dc:1,gi:'Nelle ultime 2 settimane, quanto spesso è stato disturbato dai seguenti problemi?',
  q:PHQ4.map(([k,t])=>({k:'p4'+k,t:k+'. '+t,o:obo(FRQ),vert:1})).concat([{k:'p4f',off:1,t:'Se ha segnato qualcuno di questi problemi, quanto le hanno reso difficile svolgere il suo lavoro, occuparsi delle faccende di casa, andare d\'accordo con le altre persone?',o:obo(DIFF.map(x=>x[1])),vert:1}])};
@@ -479,7 +479,7 @@ const PTQ=[
  {k:'scr3c',dep:[['scr1',[1,2]]],t:'C. Abitudini mandibolari, come mantenere i denti a contatto, serrare/digrignare, o masticare gomme',o:NY(['a6','k2'])},
  {k:'scr3d',dep:[['scr1',[1,2]]],t:'D. Altre attività della mandibola come parlare, baciare o sbadigliare',o:NY(['a6','k2'])}]},
 {g:'Dolore',dc:1,gi:'Alcune domande somigliano a quelle della pagina precedente: fanno parte di un altro questionario. Risponda comunque a tutte.',q:[
- {k:'sq2',ym:1,gate:'pain',t:'Quanti anni o mesi fa è iniziato il dolore alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio?'},
+ {k:'sq2',ym:1,gate:'past',t:'Quanti anni o mesi fa è iniziato il dolore alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio?'},
  {k:'sq3',gate:'pain',t:'Negli ultimi 30 giorni, quali delle seguenti situazioni descrive meglio il dolore alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio su uno dei due lati?',h:'Scelga una risposta.',o:obo(['Nessun dolore','Dolore che va e viene','Dolore sempre presente'])},
  {k:'sq4',x:1,dep:[['sq3',[1,2]]],t:'Negli ultimi 30 giorni, qualcuna delle seguenti attività ha cambiato il dolore (cioè lo ha peggiorato o migliorato) alla mandibola, alla tempia, nell\'orecchio o davanti all\'orecchio su uno dei due lati?'},
  ...MODQ('sq4',['a6','k2'],'gomme').map(q=>Object.assign(q,{dep:[['sq3',[1,2]]]}))]},
@@ -499,7 +499,7 @@ PTQ_GC,
  {k:'sq14',dep:[['sq13',[1]]],t:'Negli ultimi 30 giorni, quando la mandibola si è bloccata in maniera permanente o momentaneamente a bocca aperta, ha dovuto fare qualcosa per poter chiudere la bocca, incluso il riposo, muovere, spingere o manovrare la mandibola?',o:NY(['a28b'])}]},
 PTQ_JF,
 {g:'Abitudini della bocca durante il sonno',dc:1,gi:OBCGI,q:OBCI.slice(0,2).map((t,i)=>({k:'obc'+(i+1),t:(i+1)+'. '+t,o:obo(OBN),vert:1}))},
-{g:'Abitudini della bocca durante il giorno',dc:1,gi:OBCGI,q:OBCI.slice(2).map((t,i)=>({k:'obc'+(i+3),t:(i+3)+'. '+t,o:obo(OBD),vert:1}))},
+{g:'Abitudini della bocca durante il giorno',dc:1,gi:OBCGI,q:OBCI.slice(2).map((t,i)=>({k:'obc'+(i+3),t:(i+3)+'. '+t,o:obo(OBD),vert:1,...(i+3===6?{h:'Cioè tenere contratti i muscoli della mandibola anche quando i denti non si toccano, per esempio quando è concentrato/a o teso/a.'}:{})}))},
 PTQ_P4,
 {g:'Malattie generali e traumi',gi:OURGI,q:[
  {k:'q_artr',t:'Un medico le ha diagnosticato artrite reumatoide, lupus o un\'altra malattia reumatica delle articolazioni?',y:['q_artr']},
@@ -546,8 +546,10 @@ const PTSVG={nopen:'<svg viewBox="0 0 430 192" role="img" aria-label="Disegno: a
 const PTQALL=PTQ.flatMap(g=>g.q); const PTQK={}; PTQALL.forEach(q=>PTQK[q.k]=q);
 function pqOpts(q){ if(q.o) return q.o; if(q.x||q.ym||q.num) return []; const y=q.y,n=q.n===undefined?q.y:q.n; return [{t:'Sì',a:y.map(i=>[i,1])},{t:'No',a:n.map(i=>[i,0])},{t:'Non so',a:[],ns:1}] }
 /* cancello del dolore: risposta positiva alla prima domanda di pagina 1 (ultimi 30 giorni) oppure di pagina 2 (mai) */
-function ptPainGate(){ const P=S.pt||{}; return P.scr1===1||P.scr1===2||(P.scr1===0&&P.sq1===1) }
-function pqActive(q){ if(q&&q.gate==='pain'&&!ptPainGate()) return false; if(!q||!q.dep) return true; const D=typeof q.dep==='string'?[[q.dep,[0]]]:q.dep; return D.every(([k,v])=>v.includes(S.pt[k])&&pqActive(PTQK[k])) }
+function ptPastGate(){ const P=S.pt||{}; return P.scr1===1||P.scr1===2||(P.scr1===0&&P.sq1===1) }
+function ptOnsetMonths(){ const P=S.pt||{}; const a=P.sq2_a,m=P.sq2_m; if((a==null||a==='')&&(m==null||m==='')) return null; return (+a||0)*12+(+m||0) }
+function ptPainGate(){ const P=S.pt||{}; if(P.scr1===1||P.scr1===2) return true; if(P.scr1===0&&P.sq1===1){ const o=ptOnsetMonths(); return o!=null&&o<=12 } return false }
+function pqActive(q){ if(q&&q.gate==='pain'&&!ptPainGate()) return false; if(q&&q.gate==='past'&&!ptPastGate()) return false; if(!q||!q.dep) return true; const D=typeof q.dep==='string'?[[q.dep,[0]]]:q.dep; return D.every(([k,v])=>v.includes(S.pt[k])&&pqActive(PTQK[k])) }
 function ptActs(){ const A={}; PTQALL.forEach(q=>{ const a=S.pt[q.k]; if(a==null||!pqActive(q)) return;
     ((pqOpts(q)[a]||{a:[]}).a||[]).forEach(([id,val])=>{ A[id]=Math.max(A[id]==null?-1:A[id],val) }) }); return A }
 function applyPatient(){
@@ -569,6 +571,7 @@ function ptLines(){
   if(s.score!=null) L.push('Screening del dolore: '+s.score+' su 7, '+(s.pos?'positivo':'negativo')+' (positivo se 3 o più)'+(s.skip?'; domande 3A-3D non poste per assenza di dolore e contate 0 (scelta del progetto: il modulo ufficiale non prevede salti)':''));
   else if(s.n) L.push('Screening del dolore incompleto ('+s.n+' risposte su 6): punteggio non calcolabile');
   if(ptPainGate()){ const m=mods('sq4'); L.push('Dolore a mandibola, tempia o orecchio: sì'+(ym('sq2')?', iniziato '+ym('sq2')+' fa':'')+(txt('sq3')?'; negli ultimi 30 giorni: '+txt('sq3').toLowerCase():'')+(m.length?'; modificato da: '+m.join('; '):'')) }
+  else if(P.scr1===0&&P.sq1===1) L.push('Dolore a mandibola, tempia o orecchio: solo in passato, non negli ultimi 30 giorni'+(ym('sq2')?', iniziato '+ym('sq2')+' fa':', inizio non indicato')+'. Le altre domande sul dolore non sono state poste al paziente (poste solo se il dolore è iniziato da 12 mesi o meno): da approfondire in visita.');
   else if(P.scr1===0&&P.sq1===0) L.push('Dolore a mandibola, tempia o orecchio: mai');
   if(P.sq5===1){ const m=mods('sq7'); L.push('Mal di testa alle tempie negli ultimi 30 giorni: sì'+(ym('sq6')?', iniziato '+ym('sq6')+' fa':'')+(m.length?'; modificato da: '+m.join('; '):'')) }
   else if(P.sq5===0) L.push('Mal di testa alle tempie negli ultimi 30 giorni: no');
@@ -600,6 +603,7 @@ function ptPinRender(){
 }
 function ptRender(){
   if(PT.view!=='q') return ptPinRender();
+  PT.gate=ptPainGate();
   const pg=ptPages(),cur=pg[PT.p],n=pg.length;
   let h=`<div class="ptw"><div class="pthead"><h1>Questionario per il paziente</h1><button class="ptexit" data-ptgo="exit">Esci (solo clinico)</button></div><div class="ptprog"><i style="width:${Math.round(PT.p/(n-1)*100)}%"></i></div>`;
   if(cur==='intro') h+=`<div class="ptq ptbig"><p><b>Buongiorno.</b> Le chiediamo di rispondere ad alcune domande sui suoi disturbi.</p><p>Non ci sono risposte giuste o sbagliate. Tocchi una sola risposta per ogni domanda; per cambiarla, tocchi un'altra risposta. Se una domanda non è chiara, chieda al medico. Dove è presente, può scegliere <b>Non so</b>.</p><p>Il medico controllerà con lei le risposte durante la visita.</p></div>`;
@@ -625,6 +629,7 @@ function ptEmpty(k){ return typeof k==='number'&&!PTQ[k].q.some(q=>!q.x&&pqActiv
 function ptGo(a){
   if(a==='open'){ PT.msg='';PT.back='clin'; if(!hasPin()){PT.view='set';PT.next='open';return ptShow()} return ptShowQ() }
   if(a==='chpin'){ PT.msg='';PT.back='clin';PT.next='none';PT.view=hasPin()?'chgold':'set'; return ptShow() }
+  if(a==='next'&&PT.view==='q'&&ptPainGate()!==PT.gate){ ptRender(); return }
   if(a==='next'||a==='prev'){ const pg=ptPages(), d=a==='next'?1:-1;
     let k=PT.p+d; while(k>0&&k<pg.length-1&&ptEmpty(pg[k])) k+=d;
     PT.p=Math.max(0,Math.min(k,pg.length-1)); ptRender(); $('#ptov').scrollTop=0; return }
@@ -1546,7 +1551,7 @@ const QG={
 const GH2={oss:{t:'Osservazioni generali'},cerv:{t:'Screening della colonna cervicale',pre:()=>palBlock('cerv')},cervm:{t:'Parte facoltativa',pre:()=>'<div class="optbox"><b>Da qui in poi tutte le voci sono FACOLTATIVE.</b> Non entrano nel punteggio finale: vengono riportate nelle conclusioni, accanto al risultato della dashboard.</div>'+gridBlock('mob')},tc:{t:'TC / CBCT (facoltativo)',pre:()=>'<div class="optbox"><b>Voci FACOLTATIVE:</b> pesano nel risultato solo se compilate.</div>'},neuro:{t:'Screening neurologico (nervi cranici)',hint:'Segna SÌ se trovi un\'alterazione: qualsiasi alterazione compare tra i punti da approfondire dal medico.'}};
 const PTMIR=new Set(['q3','gc1','gc2','gc3','gc4','gc5','gc6','gc7','gc8','jf1','jf2','jf3','jf4','jf5','jf6','jf7','jf8','p41','p42','p43','p44','p4f']);
 function ptQv(id){ if(!PTMIR.has(id)||!S.pt) return null;
-  if(id==='q3'){ const P=S.pt; if(ptPainGate()) return 1; if(P.scr1===0&&P.sq1===0) return 0; return null } const q=PTQK[id], a=S.pt[id]; if(a==null||a===''||!q||!pqActive(q)) return null; return q.num?+a:(a+(q.off||0)) }
+  if(id==='q3'){ const P=S.pt; if(ptPastGate()) return 1; if(P.scr1===0&&P.sq1===0) return 0; return null } const q=PTQK[id], a=S.pt[id]; if(a==null||a===''||!q||!pqActive(q)) return null; return q.num?+a:(a+(q.off||0)) }
 const qEmpty=v=>v===undefined||v===null||v==='';
 const qn=id=>{const v=S.q[id]; if(!qEmpty(v)) return +v; return ptQv(id)};
 const qFromPt=id=>qEmpty(S.q[id])&&ptQv(id)!=null;
@@ -1955,6 +1960,7 @@ document.addEventListener('click',e=>{
   if(D.del){ if(b.dataset.arm){const all=allCases();delete all[D.del];LS.set('dcm_cases2',all);renderCases()} else {b.dataset.arm='1';b.textContent='Conferma elimina'} }
 });
 document.addEventListener('change',e=>{
+  if(e.target&&e.target.dataset&&e.target.dataset.ptn&&/^sq2_/.test(e.target.dataset.ptn)&&!$('#ptov').hidden){ if(ptPainGate()!==PT.gate) setTimeout(()=>{ if(!$('#ptov').hidden&&ptPainGate()!==PT.gate) ptRender() },0); return }
   const t=e.target;
   if(t.id&&t.id.startsWith('rf')&&t.type==='file'){ const k=+t.id.slice(2),f=t.files[0]; if(!f) return; if(IMG.rmn[k]) URL.revokeObjectURL(IMG.rmn[k]); IMG.rmn[k]=URL.createObjectURL(f); renderSection() }
   if(t.id==='import'&&t.files[0]){ const rd=new FileReader(); rd.onload=()=>{ try{const o=JSON.parse(rd.result);const all=allCases();(o.cases||[]).forEach(r=>{if(r&&r.cid) all[r.cid]=r});LS.set('dcm_cases2',all);renderCases();flash('#casemsg',(o.cases||[]).length+' casi importati')}catch(_){flash('#casemsg','File non valido')} t.value=''}; rd.readAsText(t.files[0]) }
